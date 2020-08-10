@@ -1,11 +1,10 @@
 #include "math.hpp"
 #include <glm/glm.hpp>
+#include <cmath>
 
 #include <iostream>
 #define _ << " " <<
 #define debug(x) #x << " = " << (x)
-
-
 
 uint32_t get_move_direction(const finger_t& finger)
 {
@@ -64,3 +63,21 @@ double get_incorrect_drag_distance(const finger_t& finger, uint32_t direction)
     const auto residual = delta - normal * (glm::dot(delta, normal) / glm::dot(normal, normal));
     return glm::length(residual);
 }
+
+double get_pinch_scale(const gesture_state_t& state)
+{
+    auto center = state.get_center();
+    double old_dist = 0;
+    double new_dist = 0;
+
+    for (const auto& f : state.fingers)
+    {
+        old_dist += glm::length(f.second.origin - center.origin);
+        new_dist += glm::length(f.second.current - center.current);
+    }
+
+    old_dist /= state.fingers.size();
+    new_dist /= state.fingers.size();
+    return new_dist / old_dist;
+}
+

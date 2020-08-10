@@ -13,3 +13,5 @@ uint32_t get_move_direction(const finger_t& finger);
 double get_incorrect_drag_distance(const finger_t& finger,
     uint32_t direction);
 
+/** Get the pinch scale */
+double get_pinch_scale(const gesture_state_t& state);

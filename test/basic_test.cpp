@@ -7,7 +7,7 @@ static finger_t finger_in_dir(double x, double y)
 {
     return finger_t {
         .origin = {0, 0},
-            .current = {x, y}
+        .current = {x, y}
     };
 }
 
@@ -34,6 +34,30 @@ TEST_CASE("get_incorrect_drag_distance")
         doctest::Approx(std::sqrt(2)));
     CHECK(get_incorrect_drag_distance(finger_in_dir(5, 5), MOVE_DIRECTION_LEFT)
         == doctest::Approx(5));
+}
+
+static finger_t finger_2p(double x, double y, double a, double b)
+{
+    return finger_t {
+        .origin = {x, y},
+        .current = {a, b}
+    };
+}
+
+TEST_CASE("get_pinch_scale")
+{
+    gesture_state_t state;
+    state.fingers[0] = finger_2p(1, 0, 2, 1);
+    state.fingers[1] = finger_2p(-1, -2, -3, -4);
+    CHECK(get_pinch_scale(state) > 2);
+
+    std::swap(state.fingers[0].origin, state.fingers[0].current);
+    std::swap(state.fingers[1].origin, state.fingers[1].current);
+    CHECK(get_pinch_scale(state) < 0.5);
+
+    state.fingers[0] = finger_2p(1, 1, 1, 1);
+    state.fingers[1] = finger_2p(2, 2, 2, 2);
+    CHECK(get_pinch_scale(state) == doctest::Approx(1));
 }
 
 TEST_CASE("finger_t")
