@@ -12,6 +12,9 @@ struct finger_t
 {
     point_t origin;
     point_t current;
+
+    /** Get movement vector */
+    point_t delta() const;
 };
 
 /**
