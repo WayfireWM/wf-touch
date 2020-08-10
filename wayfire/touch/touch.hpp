@@ -45,6 +45,17 @@ struct gesture_state_t
 };
 
 /**
+ * Represents the current state of a gesture action.
+ */
+struct gesture_action_progress_t
+{
+    /** Whether the gesture action was broken */
+    bool cancelled = false;
+
+
+};
+
+/**
  * Represents a part of the gesture.
  */
 class gesture_action_t
@@ -79,6 +90,18 @@ class gesture_action_t
     /** @return The duration of the gesture action. */
     double get_duration() const;
 
+    /**
+     * Update the action's state according to the new gesture state.
+     * @return True if the action is completed, false otherwise.
+     */
+    virtual bool update_state(const gesture_state_t& state) = 0;
+
+    /**
+     * Reset the action's state.
+     */
+    virtual void reset_state() {}
+
+    virtual ~gesture_action_t() {}
 
   protected:
     gesture_action_t() {}
@@ -88,6 +111,7 @@ class gesture_action_t
     double threshold;
     double duration;
 };
+
 
 
 }

@@ -74,6 +74,10 @@ class action_test_t : public gesture_action_t
 {
   public:
     action_test_t() {}
+    bool update_state(const gesture_state_t& state) override
+    {
+        return false;
+    }
 };
 
 TEST_CASE("gesture_action_t")
