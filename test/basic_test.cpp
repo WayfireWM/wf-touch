@@ -74,7 +74,8 @@ class action_test_t : public gesture_action_t
 {
   public:
     action_test_t() {}
-    bool update_state(const gesture_state_t& state) override
+    bool update_state(const gesture_state_t& state,
+        gesture_event_type_t type) override
     {
         return false;
     }
@@ -98,4 +99,13 @@ TEST_CASE("gesture_action_t")
 
     test.reset_state(15);
     CHECK(test.get_start_time() == 15);
+}
+
+TEST_CASE("touch_target_t")
+{
+    touch_target_t target{-1, 1, 2, 2};
+    CHECK(target.contains({0, 2}));
+    CHECK(target.contains({-1, 1}));
+    CHECK(!target.contains({1, 3}));
+    CHECK(!target.contains({0, 5}));
 }

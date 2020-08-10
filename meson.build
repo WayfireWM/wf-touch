@@ -9,7 +9,8 @@ install_headers([
 'wayfire/touch/touch.hpp'],
 subdir: 'wayfire/touch')
 
-wftouch_lib = library('wftouch', ['src/touch.cpp', 'src/math.cpp'], dependencies: glm, install: true)
+wftouch_lib = library('wftouch', ['src/touch.cpp', 'src/actions.cpp', 'src/math.cpp'],
+    dependencies: glm, install: true)
 
 wftouch = declare_dependency(link_with: wftouch_lib,
     include_directories: wf_touch_inc_dirs, dependencies: glm)

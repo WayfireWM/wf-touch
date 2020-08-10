@@ -57,3 +57,9 @@ void wf::touch::gesture_action_t::reset_state(uint32_t time)
 {
     this->start_time = time;
 }
+
+bool wf::touch::touch_target_t::contains(const point_t& pt) const
+{
+    return x <= pt.x && pt.x < x + width &&
+        y <= pt.y && pt.y < y + height;
+}
