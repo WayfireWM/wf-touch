@@ -22,3 +22,33 @@ finger_t wf::touch::gesture_state_t::get_center() const
     center.current /= this->fingers.size();
     return center;
 }
+
+void wf::touch::gesture_action_t::set_move_tolerance(double tolerance)
+{
+    this->tolerance = tolerance;
+}
+
+double wf::touch::gesture_action_t::get_move_tolerance() const
+{
+    return this->tolerance;
+}
+
+void wf::touch::gesture_action_t::set_threshold(double threshold)
+{
+    this->threshold = threshold;
+}
+
+double wf::touch::gesture_action_t::get_threshold() const
+{
+    return this->threshold;
+}
+
+void wf::touch::gesture_action_t::set_duration(double duration)
+{
+    this->duration = duration;
+}
+
+double wf::touch::gesture_action_t::get_duration() const
+{
+    return this->duration;
+}

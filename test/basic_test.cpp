@@ -62,3 +62,20 @@ TEST_CASE("gesture_state_t")
     compare_finger(state.get_center(), finger_in_dir(3, 4));
 }
 
+class action_test_t : public gesture_action_t
+{
+  public:
+    action_test_t() {}
+};
+
+TEST_CASE("gesture_action_t")
+{
+    action_test_t test;
+    test.set_threshold(150.0);
+    test.set_move_tolerance(5.0);
+    test.set_duration(100.0);
+
+    CHECK(test.get_threshold() == 150.0);
+    CHECK(test.get_move_tolerance() == 5.0);
+    CHECK(test.get_duration() == 100.0);
+}

@@ -42,7 +42,51 @@ struct gesture_state_t
      * Find the center of the fingers.
      */
     finger_t get_center() const;
+};
 
+/**
+ * Represents a part of the gesture.
+ */
+class gesture_action_t
+{
+  public:
+    /**
+     * Set the move tolerance.
+     * This is the maximum amount the fingers may move in unwanted directions.
+     */
+    void set_move_tolerance(double tolerance);
+
+    /** @return The move tolerance. */
+    double get_move_tolerance() const;
+
+    /**
+     * Set the threshold for the action (in pixels or radians).
+     * This is the amount of movement in the desired direction(s) needed for
+     * the action to be completed.
+     */
+    void set_threshold(double threshold);
+
+    /** @return The threshold */
+    double get_threshold() const;
+
+    /**
+     * Set the duration of the action in milliseconds.
+     * This is the minimal time needed for this action to be happening to
+     * consider it complete.
+     */
+    void set_duration(double duration);
+
+    /** @return The duration of the gesture action. */
+    double get_duration() const;
+
+
+  protected:
+    gesture_action_t() {}
+
+  private:
+    double tolerance;
+    double threshold;
+    double duration;
 };
 
 
