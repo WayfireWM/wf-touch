@@ -60,8 +60,6 @@ double get_incorrect_drag_distance(const finger_t& finger, uint32_t direction)
 {
     const auto normal = get_dir_nv(direction);
     const auto delta = finger.delta();
-
-    std::cout << debug(normal.x) _ debug(normal.y) _ debug(delta.x) _ debug(delta.y) << std::endl;
     /* grahm-schmidt */
     const auto residual = delta - normal * (glm::dot(delta, normal) / glm::dot(normal, normal));
     return glm::length(residual);
