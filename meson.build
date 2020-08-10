@@ -4,8 +4,7 @@ project('wf-touch', ['cpp'],
 
 wf_touch_inc_dirs = include_directories('.')
 install_headers([
-'wayfire/touch/touch.hpp',
-'wayfire/touch/geometry.hpp'],
+'wayfire/touch/touch.hpp'],
 subdir: 'wayfire/touch')
 wftouch_lib = library('wftouch', ['src/touch.cpp', 'src/math.cpp'], install: true)
 
