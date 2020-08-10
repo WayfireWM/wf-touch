@@ -1,5 +1,6 @@
 #include "math.hpp"
 #include <glm/glm.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #include <cmath>
 
 #include <iostream>
@@ -81,3 +82,23 @@ double get_pinch_scale(const gesture_state_t& state)
     return new_dist / old_dist;
 }
 
+double oriented_angle(point_t a, point_t b)
+{
+    return std::acos(glm::dot(a, b) / glm::length(a) / glm::length(b));
+}
+
+double get_rotation_angle(const gesture_state_t& state)
+{
+    auto center = state.get_center();
+
+    double angle_sum = 0;
+    for (const auto& f : state.fingers)
+    {
+        auto v1 = glm::normalize(f.second.origin - center.origin);
+        auto v2 = glm::normalize(f.second.current - center.current);
+        angle_sum += glm::orientedAngle(v1, v2);
+    }
+
+    angle_sum /= state.fingers.size();
+    return angle_sum;
+}

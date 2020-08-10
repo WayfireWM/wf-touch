@@ -1,5 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 #include "src/math.hpp"
 
@@ -58,6 +60,24 @@ TEST_CASE("get_pinch_scale")
     state.fingers[0] = finger_2p(1, 1, 1, 1);
     state.fingers[1] = finger_2p(2, 2, 2, 2);
     CHECK(get_pinch_scale(state) == doctest::Approx(1));
+}
+
+TEST_CASE("get_rotation_angle")
+{
+    gesture_state_t state;
+    state.fingers[0] = finger_2p(0, 1, 1, 0);
+    state.fingers[1] = finger_2p(1, 0, 0, -1);
+    state.fingers[2] = finger_2p(0, -1, -1, 0);
+    state.fingers[3] = finger_2p(-1, 0, 0, 1);
+    CHECK(get_rotation_angle(state) == doctest::Approx(-M_PI / 2.0));
+
+    // triangle (0, 0), (56, 15), (15, 56) is almost equilateral
+    state.fingers.clear();
+    state.fingers[0] = finger_2p(0, 0, 56, 15);
+    state.fingers[1] = finger_2p(56, 15, 15, 56);
+    state.fingers[2] = finger_2p(15, 56, 0, 0);
+    CHECK(get_rotation_angle(state) ==
+        doctest::Approx(2.0 * M_PI / 3.0).epsilon(0.05));
 }
 
 TEST_CASE("finger_t")
