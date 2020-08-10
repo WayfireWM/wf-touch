@@ -52,3 +52,8 @@ double wf::touch::gesture_action_t::get_duration() const
 {
     return this->duration;
 }
+
+void wf::touch::gesture_action_t::reset_state(uint32_t time)
+{
+    this->start_time = time;
+}

@@ -38,21 +38,13 @@ struct gesture_state_t
     // finger_id -> finger_t
     std::map<int, finger_t> fingers;
 
+    /** Time of last event. */
+    uint32_t last_event_ms;
+
     /**
      * Find the center of the fingers.
      */
     finger_t get_center() const;
-};
-
-/**
- * Represents the current state of a gesture action.
- */
-struct gesture_action_progress_t
-{
-    /** Whether the gesture action was broken */
-    bool cancelled = false;
-
-
 };
 
 /**
@@ -82,7 +74,7 @@ class gesture_action_t
 
     /**
      * Set the duration of the action in milliseconds.
-     * This is the minimal time needed for this action to be happening to
+     * This is the maximal time needed for this action to be happening to
      * consider it complete.
      */
     void set_duration(double duration);
@@ -98,18 +90,29 @@ class gesture_action_t
 
     /**
      * Reset the action's state.
+     * Called when the action is cancelled or started again.
+     *
+     * @param time The time in milliseconds of the event triggering this.
      */
-    virtual void reset_state() {}
+    virtual void reset_state(uint32_t time);
 
     virtual ~gesture_action_t() {}
 
   protected:
     gesture_action_t() {}
+    uint32_t start_time;
 
   private:
     double tolerance;
     double threshold;
     double duration;
+};
+
+/**
+ * Represents the action of touching down with several fingers.
+ */
+class touch_action_t
+{
 };
 
 

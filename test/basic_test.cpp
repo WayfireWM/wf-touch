@@ -78,6 +78,11 @@ class action_test_t : public gesture_action_t
     {
         return false;
     }
+
+    uint32_t get_start_time()
+    {
+        return this->start_time;
+    }
 };
 
 TEST_CASE("gesture_action_t")
@@ -90,4 +95,7 @@ TEST_CASE("gesture_action_t")
     CHECK(test.get_threshold() == 150.0);
     CHECK(test.get_move_tolerance() == 5.0);
     CHECK(test.get_duration() == 100.0);
+
+    test.reset_state(15);
+    CHECK(test.get_start_time() == 15);
 }
