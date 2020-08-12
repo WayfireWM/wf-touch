@@ -49,3 +49,34 @@ TEST_CASE("touch_action_t")
     touch_up.reset(0);
     CHECK(touch_up.update_state(state, event_up) == ACTION_STATUS_CANCELLED);
 }
+
+TEST_CASE("wf::touch::hold_action_t")
+{
+    hold_action_t hold{50};
+    hold.set_move_tolerance(1);
+
+    gesture_state_t state;
+    state.fingers[0] = finger_in_dir(1, 0);
+    gesture_event_t ev;
+
+    // check ok state
+    hold.reset(0);
+    ev.time = 49;
+    ev.type = EVENT_TYPE_MOTION;
+    CHECK(hold.update_state(state, ev) == ACTION_STATUS_RUNNING);
+    ev.time = 50;
+    ev.type = EVENT_TYPE_TOUCH_UP;
+    CHECK(hold.update_state(state, ev) == ACTION_STATUS_ALREADY_COMPLETED);
+
+    // check finger breaks action
+    hold.reset(0);
+    ev.type = EVENT_TYPE_TOUCH_UP;
+    ev.time = 49;
+    CHECK(hold.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+
+    // check too much movement
+    state.fingers[0] = finger_in_dir(2, 0);
+    ev.time = 49;
+    hold.reset(0);
+    CHECK(hold.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+}

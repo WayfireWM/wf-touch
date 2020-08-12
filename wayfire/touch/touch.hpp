@@ -64,6 +64,8 @@ enum action_status_t
 {
     /** Action is done after this event. */
     ACTION_STATUS_COMPLETED,
+    /** Action was completed before this event (for example, hold action). */
+    ACTION_STATUS_ALREADY_COMPLETED,
     /** Action is still running after this event. */
     ACTION_STATUS_RUNNING,
     /** The whole gesture should be cancelled. */
@@ -197,5 +199,36 @@ class touch_action_t : public gesture_action_t
 
     touch_target_t target;
 };
-}
+
+/**
+ * Represents the action of holding the fingers still for a certain amount
+ * of time.
+ */
+class hold_action_t : public gesture_action_t
+{
+  public:
+    /**
+     * Create a new hold action.
+     *
+     * @param threshold The time is milliseconds needed to consider the gesture
+     *   complete.
+     */
+    hold_action_t(int32_t threshold);
+
+    /**
+     * The action is already completed iff no fingers have been added or
+     * released and the given amount of time has passed without much movement.
+     */
+    action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event) override;
+
+  protected:
+    /** @return True if the fingers have moved too much. */
+    bool exceeds_tolerance(const gesture_state_t& state) override;
+
+  private:
+    int32_t threshold;
+};
+
+};
 }
