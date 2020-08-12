@@ -74,31 +74,34 @@ class action_test_t : public gesture_action_t
 {
   public:
     action_test_t() {}
-    bool update_state(const gesture_state_t& state,
-        gesture_event_type_t type) override
-    {
-        return false;
-    }
-
     uint32_t get_start_time()
     {
         return this->start_time;
+    }
+
+    virtual action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event)
+    {
+        return calculate_next_status(state, event, true);
     }
 };
 
 TEST_CASE("gesture_action_t")
 {
     action_test_t test;
-    test.set_threshold(150.0);
     test.set_move_tolerance(5.0);
-    test.set_duration(100.0);
+    test.set_duration(20);
 
-    CHECK(test.get_threshold() == 150.0);
     CHECK(test.get_move_tolerance() == 5.0);
-    CHECK(test.get_duration() == 100.0);
+    CHECK(test.get_duration() == 20);
 
-    test.reset_state(15);
-    CHECK(test.get_start_time() == 15);
+    gesture_state_t state;
+    gesture_event_t event;
+    event.time = 20;
+    test.reset(0);
+    CHECK(test.update_state(state, event) == ACTION_STATUS_RUNNING);
+    event.time = 21;
+    CHECK(test.update_state(state, event) == ACTION_STATUS_CANCELLED);
 }
 
 TEST_CASE("touch_target_t")

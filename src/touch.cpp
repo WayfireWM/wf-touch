@@ -1,6 +1,10 @@
 #include <wayfire/touch/touch.hpp>
 #include "math.hpp"
 
+#include <iostream>
+#define _ << " " <<
+#define debug(x) #x << " = " << (x)
+
 point_t wf::touch::finger_t::delta() const
 {
     return this->current - this->origin;
@@ -33,27 +37,34 @@ double wf::touch::gesture_action_t::get_move_tolerance() const
     return this->tolerance;
 }
 
-void wf::touch::gesture_action_t::set_threshold(double threshold)
-{
-    this->threshold = threshold;
-}
-
-double wf::touch::gesture_action_t::get_threshold() const
-{
-    return this->threshold;
-}
-
-void wf::touch::gesture_action_t::set_duration(double duration)
+void wf::touch::gesture_action_t::set_duration(uint32_t duration)
 {
     this->duration = duration;
 }
 
-double wf::touch::gesture_action_t::get_duration() const
+uint32_t wf::touch::gesture_action_t::get_duration() const
 {
     return this->duration;
 }
 
-void wf::touch::gesture_action_t::reset_state(uint32_t time)
+action_status_t wf::touch::gesture_action_t::calculate_next_status(
+    const gesture_state_t& state, const gesture_event_t& last_event, bool running)
+{
+    uint32_t elapsed = last_event.time - this->start_time;
+    if ((elapsed > this->get_duration()) || exceeds_tolerance(state))
+    {
+        return ACTION_STATUS_CANCELLED;
+    }
+
+    return running ? ACTION_STATUS_RUNNING : ACTION_STATUS_COMPLETED;
+}
+
+bool wf::touch::gesture_action_t::exceeds_tolerance(const gesture_state_t& state)
+{
+    return false;
+}
+
+void wf::touch::gesture_action_t::reset(uint32_t time)
 {
     this->start_time = time;
 }

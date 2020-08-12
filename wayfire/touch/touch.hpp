@@ -38,9 +38,6 @@ struct gesture_state_t
     // finger_id -> finger_t
     std::map<int, finger_t> fingers;
 
-    /** Time of last event. */
-    uint32_t last_event_ms;
-
     /**
      * Find the center of the fingers.
      */
@@ -52,6 +49,25 @@ enum gesture_event_type_t
     EVENT_TYPE_TOUCH_DOWN,
     EVENT_TYPE_TOUCH_UP,
     EVENT_TYPE_MOTION,
+};
+
+struct gesture_event_t
+{
+    gesture_event_type_t type;
+    uint32_t time;
+};
+
+/**
+ * Represents the status of an action after it is updated
+ */
+enum action_status_t
+{
+    /** Action is done after this event. */
+    ACTION_STATUS_COMPLETED,
+    /** Action is still running after this event. */
+    ACTION_STATUS_RUNNING,
+    /** The whole gesture should be cancelled. */
+    ACTION_STATUS_CANCELLED,
 };
 
 /**
@@ -70,55 +86,62 @@ class gesture_action_t
     double get_move_tolerance() const;
 
     /**
-     * Set the threshold for the action (in pixels or radians).
-     * This is the amount of movement in the desired direction(s) needed for
-     * the action to be completed.
-     */
-    void set_threshold(double threshold);
-
-    /** @return The threshold */
-    double get_threshold() const;
-
-    /**
      * Set the duration of the action in milliseconds.
      * This is the maximal time needed for this action to be happening to
      * consider it complete.
      */
-    void set_duration(double duration);
+    void set_duration(uint32_t duration);
 
     /** @return The duration of the gesture action. */
-    double get_duration() const;
+    uint32_t get_duration() const;
 
     /**
      * Update the action's state according to the next state. Note that in
      * case of a touch up event, the state still contains the to-be-removed
      * touch point.
      *
-     * @param type The type of the event causing this update.
+     * NOTE: The actual implementation should update the @start_time field.
      *
-     * @return True if the action is completed, false otherwise.
+     * @param state The gesture state since the last reset of the gesture.
+     * @param event The event causing this update.
+     * @return The new action status.
      */
-    virtual bool update_state(const gesture_state_t& state,
-        gesture_event_type_t type) = 0;
+    virtual action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event) = 0;
 
     /**
-     * Reset the action's state.
-     * Called when the action is cancelled or started again.
-     *
-     * @param time The time in milliseconds of the event triggering this.
+     * Reset the action.
+     * Called whenever the action is started again.
      */
-    virtual void reset_state(uint32_t time);
+    virtual void reset(uint32_t time);
 
     virtual ~gesture_action_t() {}
 
   protected:
     gesture_action_t() {}
-    uint32_t start_time;
+
+    /** Time of the first event. */
+    int64_t start_time;
+
+    /**
+     * Calculate the correct action status. It is determined as follows:
+     * 1. action has timed out(i.e start_time + duration > timestamp) => CANCELLED
+     * 1. finger movement exceeds move tolerance => CANCELLED
+     * 2. @running is false and gesture has not timed out => COMPLETED
+     * 3. @running is true and gesture has not timed out => RUNNING
+     */
+    action_status_t calculate_next_status(const gesture_state_t& state,
+        const gesture_event_t& last_event, bool running);
+
+    /**
+     * Calculate whether movement exceeds tolerance.
+     * By default, tolerance is ignored, so actions should override this function.
+     */
+    virtual bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
-    double tolerance;
-    double threshold;
-    double duration;
+    double tolerance = 1e18; // very big
+    uint32_t duration = -1; // maximal duration
 };
 
 /**
@@ -143,7 +166,8 @@ class touch_action_t : public gesture_action_t
     /**
      * Create a new touch down or up action.
      *
-     * @param cnt_fingers The number of fingers this touch action matches.
+     * @param cnt_fingers The number of fingers that need to be touched down
+     *   or released to consider the action completed.
      * @param touch_down Whether the action is touch down or touch up.
      */
     touch_action_t(int cnt_fingers, bool touch_down);
@@ -157,17 +181,21 @@ class touch_action_t : public gesture_action_t
      * Mark the action as completed iff state has the right amount of fingers
      * and if the event is a touch down.
      */
-    bool update_state(const gesture_state_t& state,
-        gesture_event_type_t type) override;
+    action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event) override;
+
+    void reset(uint32_t time) override;
+
+  protected:
+    /** @return True if the fingers have moved too much. */
+    bool exceeds_tolerance(const gesture_state_t& state) override;
 
   private:
     int cnt_fingers;
+    int released_fingers;
     gesture_event_type_t type;
 
     touch_target_t target;
 };
-
-
-
 }
 }
