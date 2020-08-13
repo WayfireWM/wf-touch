@@ -18,8 +18,10 @@ TEST_CASE("get_incorrect_drag_distance")
         doctest::Approx(std::sqrt(2)));
     CHECK(finger_in_dir(-1, -1).get_incorrect_drag_distance(ld) ==
         doctest::Approx(std::sqrt(2)));
-    CHECK(finger_in_dir(5, 5).get_incorrect_drag_distance(MOVE_DIRECTION_LEFT)
+    CHECK(finger_in_dir(5, 5).get_incorrect_drag_distance(MOVE_DIRECTION_RIGHT)
         == doctest::Approx(5));
+    CHECK(finger_in_dir(4, 0).get_incorrect_drag_distance(MOVE_DIRECTION_LEFT)
+        == doctest::Approx(4));
 }
 
 TEST_CASE("get_pinch_scale")

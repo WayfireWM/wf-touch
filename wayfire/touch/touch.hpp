@@ -32,7 +32,7 @@ struct finger_t
     /** Find direction of movement, a bitmask of move_direction_t */
     uint32_t get_direction() const;
 
-    /** Find length of perpendicular direction dragging */
+    /** Find drag distance in opposite and perpendicular directions */
     double get_incorrect_drag_distance(uint32_t direction) const;
 };
 
@@ -48,10 +48,13 @@ struct gesture_state_t
     /** Find the center points of the fingers. */
     finger_t get_center() const;
 
-    /** Get the pinch scale */
+    /** Get the pinch scale of current touch points. */
     double get_pinch_scale() const;
 
-    /** Get the rotation angle, works for rotation < 180 degrees. */
+    /**
+     * Get the rotation angle in radians of current touch points.
+     * NB: Works only for rotation < 180 degrees.
+     */
     double get_rotation_angle() const;
 };
 

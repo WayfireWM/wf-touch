@@ -61,8 +61,16 @@ double wf::touch::finger_t::get_incorrect_drag_distance(uint32_t direction) cons
 {
     const auto normal = get_dir_nv(direction);
     const auto delta = this->delta();
+
     /* grahm-schmidt */
-    const auto residual = delta - normal * (glm::dot(delta, normal) / glm::dot(normal, normal));
+    double amount_alongside_dir = glm::dot(delta, normal) / glm::dot(normal, normal);
+    if (amount_alongside_dir < 0)
+    {
+        /* Drag in opposite direction */
+        return glm::length(delta);
+    }
+
+    const auto residual = delta - normal * amount_alongside_dir;
     return glm::length(residual);
 }
 
