@@ -107,4 +107,46 @@ TEST_CASE("wf::touch::drag_action_t")
     state.fingers[1] = finger_in_dir(0, 6);
     drag.reset(0);
     CHECK(drag.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+
+    // check touch cancels
+    ev.type = EVENT_TYPE_TOUCH_UP;
+    state.fingers[1] = finger_in_dir(-50, 3);
+    drag.reset(0);
+    CHECK(drag.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+}
+
+TEST_CASE("wf::touch::pinch_action_t")
+{
+    pinch_action_t in{0.5}, out{2};
+
+    gesture_state_t state;
+    state.fingers[0] = finger_2p(1, 0, 2, 1);
+    state.fingers[1] = finger_2p(-1, -2, -3, -4);
+
+    gesture_event_t ev;
+    ev.time = 0;
+    ev.type = EVENT_TYPE_MOTION;
+
+    // ok
+    out.reset(0);
+    CHECK(out.update_state(state, ev) == ACTION_STATUS_COMPLETED);
+
+    std::swap(state.fingers[0].origin, state.fingers[0].current);
+    std::swap(state.fingers[1].origin, state.fingers[1].current);
+    in.reset(0);
+    CHECK(in.update_state(state, ev) == ACTION_STATUS_COMPLETED);
+
+    // too much movement
+    in.set_move_tolerance(1);
+    in.reset(0);
+    state.fingers[0].current += point_t{2, 0};
+    state.fingers[1].current += point_t{2, 0};
+    CHECK(in.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+
+    // touch cancels
+    in.reset(0);
+    state.fingers[0].current -= point_t{2, 0};
+    state.fingers[1].current -= point_t{2, 0};
+    ev.type = EVENT_TYPE_TOUCH_DOWN;
+    CHECK(in.update_state(state, ev) == ACTION_STATUS_CANCELLED);
 }

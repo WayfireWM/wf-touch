@@ -280,5 +280,37 @@ class drag_action_t : public gesture_action_t
     double threshold;
     uint32_t direction;
 };
+
+/**
+ * Represents a pinch action.
+ */
+class pinch_action_t : public gesture_action_t
+{
+  public:
+    /**
+     * Create a new pinch action.
+     *
+     * @param threshold The threshold to be exceeded.
+     *   If threshold is less/more than 1, then the action is complete when
+     *   the actual pinch scale is respectively less/more than threshold.
+     */
+    pinch_action_t(double threshold);
+
+    /**
+     * The action is already completed iff no fingers have been added or
+     * released and the pinch threshold has been reached without much movement.
+     */
+    action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event) override;
+
+  protected:
+    /**
+     * @return True if gesture center has moved more than tolerance.
+     */
+    bool exceeds_tolerance(const gesture_state_t& state) override;
+
+  private:
+    double threshold;
+};
 }
 }

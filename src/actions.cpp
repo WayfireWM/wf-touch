@@ -140,3 +140,33 @@ bool wf::touch::drag_action_t::exceeds_tolerance(const gesture_state_t& state)
 
     return false;
 }
+
+/*- -------------------------- Pinch action ---------------------------------- */
+wf::touch::pinch_action_t::pinch_action_t(double threshold)
+{
+    this->threshold = threshold;
+}
+
+action_status_t wf::touch::pinch_action_t::update_state(const gesture_state_t& state,
+    const gesture_event_t& event)
+{
+    if (event.type != EVENT_TYPE_MOTION)
+    {
+        return ACTION_STATUS_CANCELLED;
+    }
+
+    bool running = true;
+    const double current_scale = state.get_pinch_scale();
+    if (((this->threshold < 1.0) && (current_scale <= threshold)) ||
+        ((this->threshold > 1.0) && (current_scale >= threshold)))
+    {
+        running = false;
+    }
+
+    return calculate_next_status(state, event, running);
+}
+
+bool wf::touch::pinch_action_t::exceeds_tolerance(const gesture_state_t& state)
+{
+    return glm::length(state.get_center().delta()) > this->get_move_tolerance();
+}
