@@ -57,6 +57,21 @@ static point_t get_dir_nv(uint32_t direction)
     return dir;
 }
 
+double wf::touch::finger_t::get_drag_distance(uint32_t direction) const
+{
+    const auto normal = get_dir_nv(direction);
+    const auto delta = this->delta();
+
+    /* grahm-schmidt */
+    const double amount_alongside_dir = glm::dot(delta, normal) / glm::dot(normal, normal);
+    if (amount_alongside_dir >= 0)
+    {
+        return glm::length(amount_alongside_dir * normal);
+    }
+
+    return 0;
+}
+
 double wf::touch::finger_t::get_incorrect_drag_distance(uint32_t direction) const
 {
     const auto normal = get_dir_nv(direction);
@@ -89,11 +104,6 @@ double wf::touch::gesture_state_t::get_pinch_scale() const
     old_dist /= fingers.size();
     new_dist /= fingers.size();
     return new_dist / old_dist;
-}
-
-static double oriented_angle(point_t a, point_t b)
-{
-    return std::acos(glm::dot(a, b) / glm::length(a) / glm::length(b));
 }
 
 double wf::touch::gesture_state_t::get_rotation_angle() const

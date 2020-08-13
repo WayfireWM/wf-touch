@@ -32,6 +32,9 @@ struct finger_t
     /** Find direction of movement, a bitmask of move_direction_t */
     uint32_t get_direction() const;
 
+    /** Find drag distance in the given direction */
+    double get_drag_distance(uint32_t direction) const;
+
     /** Find drag distance in opposite and perpendicular directions */
     double get_incorrect_drag_distance(uint32_t direction) const;
 };
@@ -242,6 +245,40 @@ class hold_action_t : public gesture_action_t
 
   private:
     int32_t threshold;
+};
+
+/**
+ * Represents the action of dragging the fingers in a particular direction
+ * over a particular distance.
+ */
+class drag_action_t : public gesture_action_t
+{
+  public:
+    /**
+     * Create a new drag action.
+     *
+     * @param direction The direction of the drag action.
+     * @param threshold The distance that needs to be covered.
+     */
+    drag_action_t(uint32_t direction, double threshold);
+
+    /**
+     * The action is already completed iff no fingers have been added or
+     * released and the given amount of time has passed without much movement.
+     */
+    action_status_t update_state(const gesture_state_t& state,
+        const gesture_event_t& event) override;
+
+  protected:
+    /**
+     * @return True if any finger has moved more than the threshold in an
+     *  incorrect direction.
+     */
+    bool exceeds_tolerance(const gesture_state_t& state) override;
+
+  private:
+    double threshold;
+    uint32_t direction;
 };
 }
 }

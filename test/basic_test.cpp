@@ -10,6 +10,14 @@ TEST_CASE("get_move_in_direction")
     CHECK(finger_in_dir(0, 0).get_direction() == 0);
 }
 
+TEST_CASE("get_drag_distance")
+{
+    CHECK(finger_in_dir(0, 5).get_drag_distance(MOVE_DIRECTION_DOWN)
+        == doctest::Approx(5));
+    CHECK(finger_in_dir(-1, -1).get_drag_distance(MOVE_DIRECTION_DOWN)
+        == doctest::Approx(0));
+}
+
 TEST_CASE("get_incorrect_drag_distance")
 {
     CHECK(finger_in_dir(-1, -1).get_incorrect_drag_distance(lu) ==

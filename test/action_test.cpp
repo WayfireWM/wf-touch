@@ -80,3 +80,31 @@ TEST_CASE("wf::touch::hold_action_t")
     hold.reset(0);
     CHECK(hold.update_state(state, ev) == ACTION_STATUS_CANCELLED);
 }
+
+TEST_CASE("wf::touch::drag_action_t")
+{
+    drag_action_t drag{MOVE_DIRECTION_LEFT, 50};
+    drag.set_move_tolerance(5);
+
+    gesture_state_t state;
+    state.fingers[0] = finger_in_dir(-50, 0);
+    state.fingers[1] = finger_in_dir(-50, 3);
+
+    gesture_event_t ev;
+    ev.type = EVENT_TYPE_MOTION;
+    ev.time = 0;
+
+    // check ok
+    drag.reset(0);
+    CHECK(drag.update_state(state, ev) == ACTION_STATUS_COMPLETED);
+
+    // check distance not enough
+    drag.reset(0);
+    state.fingers[0] = finger_in_dir(-49, 0);
+    CHECK(drag.update_state(state, ev) == ACTION_STATUS_RUNNING);
+
+    // check exceeds tolerance
+    state.fingers[1] = finger_in_dir(0, 6);
+    drag.reset(0);
+    CHECK(drag.update_state(state, ev) == ACTION_STATUS_CANCELLED);
+}

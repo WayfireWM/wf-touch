@@ -107,3 +107,36 @@ bool wf::touch::hold_action_t::exceeds_tolerance(const gesture_state_t& state)
 {
     return find_max_delta(state) > this->get_move_tolerance();
 }
+
+/*- -------------------------- Drag action ---------------------------------- */
+wf::touch::drag_action_t::drag_action_t(uint32_t direction, double threshold)
+{
+    this->direction = direction;
+    this->threshold = threshold;
+}
+
+action_status_t wf::touch::drag_action_t::update_state(const gesture_state_t& state,
+    const gesture_event_t& event)
+{
+    if (event.type != EVENT_TYPE_MOTION)
+    {
+        return ACTION_STATUS_CANCELLED;
+    }
+
+    const double dragged = state.get_center().get_drag_distance(this->direction);
+    return calculate_next_status(state, event, dragged < this->threshold);
+}
+
+bool wf::touch::drag_action_t::exceeds_tolerance(const gesture_state_t& state)
+{
+    for (auto& f : state.fingers)
+    {
+        if (f.second.get_incorrect_drag_distance(this->direction) >
+            this->get_move_tolerance())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
