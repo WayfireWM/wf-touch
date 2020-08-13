@@ -9,14 +9,6 @@ namespace touch
 {
 using point_t = glm::dvec2;
 
-struct finger_t
-{
-    point_t origin;
-    point_t current;
-
-    /** Get movement vector */
-    point_t delta() const;
-};
 
 /**
  * Movement direction.
@@ -29,6 +21,21 @@ enum move_direction_t
     MOVE_DIRECTION_DOWN  = (1 << 3),
 };
 
+struct finger_t
+{
+    point_t origin;
+    point_t current;
+
+    /** Get movement vector */
+    point_t delta() const;
+
+    /** Find direction of movement, a bitmask of move_direction_t */
+    uint32_t get_direction() const;
+
+    /** Find length of perpendicular direction dragging */
+    double get_incorrect_drag_distance(uint32_t direction) const;
+};
+
 /**
  * Contains all fingers.
  */
@@ -38,10 +45,14 @@ struct gesture_state_t
     // finger_id -> finger_t
     std::map<int, finger_t> fingers;
 
-    /**
-     * Find the center of the fingers.
-     */
+    /** Find the center points of the fingers. */
     finger_t get_center() const;
+
+    /** Get the pinch scale */
+    double get_pinch_scale() const;
+
+    /** Get the rotation angle, works for rotation < 180 degrees. */
+    double get_rotation_angle() const;
 };
 
 enum gesture_event_type_t
@@ -229,6 +240,5 @@ class hold_action_t : public gesture_action_t
   private:
     int32_t threshold;
 };
-
-};
+}
 }

@@ -4,21 +4,21 @@
 
 TEST_CASE("get_move_in_direction")
 {
-    CHECK(get_move_direction(finger_in_dir(1, 0)) == MOVE_DIRECTION_RIGHT);
-    CHECK(get_move_direction(finger_in_dir(-1, -1)) == lu);
-    CHECK(get_move_direction(finger_in_dir(1, 1)) == rd);
-    CHECK(get_move_direction(finger_in_dir(0, 0)) == 0);
+    CHECK(finger_in_dir(1, 0).get_direction() == MOVE_DIRECTION_RIGHT);
+    CHECK(finger_in_dir(-1, -1).get_direction() == lu);
+    CHECK(finger_in_dir(1, 1).get_direction() == rd);
+    CHECK(finger_in_dir(0, 0).get_direction() == 0);
 }
 
 TEST_CASE("get_incorrect_drag_distance")
 {
-    CHECK(get_incorrect_drag_distance(finger_in_dir(-1, -1), lu) ==
+    CHECK(finger_in_dir(-1, -1).get_incorrect_drag_distance(lu) ==
         doctest::Approx(0));
-    CHECK(get_incorrect_drag_distance(finger_in_dir(-1, -1), ru) ==
+    CHECK(finger_in_dir(-1, -1).get_incorrect_drag_distance(ru) ==
         doctest::Approx(std::sqrt(2)));
-    CHECK(get_incorrect_drag_distance(finger_in_dir(-1, -1), ld) ==
+    CHECK(finger_in_dir(-1, -1).get_incorrect_drag_distance(ld) ==
         doctest::Approx(std::sqrt(2)));
-    CHECK(get_incorrect_drag_distance(finger_in_dir(5, 5), MOVE_DIRECTION_LEFT)
+    CHECK(finger_in_dir(5, 5).get_incorrect_drag_distance(MOVE_DIRECTION_LEFT)
         == doctest::Approx(5));
 }
 
@@ -27,15 +27,15 @@ TEST_CASE("get_pinch_scale")
     gesture_state_t state;
     state.fingers[0] = finger_2p(1, 0, 2, 1);
     state.fingers[1] = finger_2p(-1, -2, -3, -4);
-    CHECK(get_pinch_scale(state) > 2);
+    CHECK(state.get_pinch_scale() > 2);
 
     std::swap(state.fingers[0].origin, state.fingers[0].current);
     std::swap(state.fingers[1].origin, state.fingers[1].current);
-    CHECK(get_pinch_scale(state) < 0.5);
+    CHECK(state.get_pinch_scale() < 0.5);
 
     state.fingers[0] = finger_2p(1, 1, 1, 1);
     state.fingers[1] = finger_2p(2, 2, 2, 2);
-    CHECK(get_pinch_scale(state) == doctest::Approx(1));
+    CHECK(state.get_pinch_scale() == doctest::Approx(1));
 }
 
 TEST_CASE("get_rotation_angle")
@@ -45,14 +45,14 @@ TEST_CASE("get_rotation_angle")
     state.fingers[1] = finger_2p(1, 0, 0, -1);
     state.fingers[2] = finger_2p(0, -1, -1, 0);
     state.fingers[3] = finger_2p(-1, 0, 0, 1);
-    CHECK(get_rotation_angle(state) == doctest::Approx(-M_PI / 2.0));
+    CHECK(state.get_rotation_angle() == doctest::Approx(-M_PI / 2.0));
 
     // triangle (0, 0), (56, 15), (15, 56) is almost equilateral
     state.fingers.clear();
     state.fingers[0] = finger_2p(0, 0, 56, 15);
     state.fingers[1] = finger_2p(56, 15, 15, 56);
     state.fingers[2] = finger_2p(15, 56, 0, 0);
-    CHECK(get_rotation_angle(state) ==
+    CHECK(state.get_rotation_angle() ==
         doctest::Approx(2.0 * M_PI / 3.0).epsilon(0.05));
 }
 

@@ -1,10 +1,11 @@
-#include "math.hpp"
+#include <wayfire/touch/touch.hpp>
 #include <glm/glm.hpp>
 
 #include <iostream>
 #define _ << " " <<
 #define debug(x) #x << " = " << (x)
 
+using namespace wf::touch;
 /* -------------------------- Touch action ---------------------------------- */
 wf::touch::touch_action_t::touch_action_t(int cnt_fingers, bool touch_down)
 {

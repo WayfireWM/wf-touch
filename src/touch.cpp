@@ -1,9 +1,10 @@
 #include <wayfire/touch/touch.hpp>
-#include "math.hpp"
 
 #include <iostream>
 #define _ << " " <<
 #define debug(x) #x << " = " << (x)
+
+using namespace wf::touch;
 
 point_t wf::touch::finger_t::delta() const
 {

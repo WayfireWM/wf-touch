@@ -1,6 +1,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include "src/math.hpp"
+
+#include <wayfire/touch/touch.hpp>
+using namespace wf::touch;
 
 static finger_t finger_in_dir(double x, double y)
 {

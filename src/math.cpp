@@ -1,4 +1,4 @@
-#include "math.hpp"
+#include <wayfire/touch/touch.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <cmath>
@@ -7,9 +7,10 @@
 #define _ << " " <<
 #define debug(x) #x << " = " << (x)
 
-uint32_t get_move_direction(const finger_t& finger)
+using namespace wf::touch;
+uint32_t wf::touch::finger_t::get_direction() const
 {
-    auto delta = finger.delta();
+    auto delta = this->delta();
     uint32_t result = 0;
     if (delta.x < 0)
     {
@@ -56,49 +57,49 @@ static point_t get_dir_nv(uint32_t direction)
     return dir;
 }
 
-double get_incorrect_drag_distance(const finger_t& finger, uint32_t direction)
+double wf::touch::finger_t::get_incorrect_drag_distance(uint32_t direction) const
 {
     const auto normal = get_dir_nv(direction);
-    const auto delta = finger.delta();
+    const auto delta = this->delta();
     /* grahm-schmidt */
     const auto residual = delta - normal * (glm::dot(delta, normal) / glm::dot(normal, normal));
     return glm::length(residual);
 }
 
-double get_pinch_scale(const gesture_state_t& state)
+double wf::touch::gesture_state_t::get_pinch_scale() const
 {
-    auto center = state.get_center();
+    auto center = get_center();
     double old_dist = 0;
     double new_dist = 0;
 
-    for (const auto& f : state.fingers)
+    for (const auto& f : fingers)
     {
         old_dist += glm::length(f.second.origin - center.origin);
         new_dist += glm::length(f.second.current - center.current);
     }
 
-    old_dist /= state.fingers.size();
-    new_dist /= state.fingers.size();
+    old_dist /= fingers.size();
+    new_dist /= fingers.size();
     return new_dist / old_dist;
 }
 
-double oriented_angle(point_t a, point_t b)
+static double oriented_angle(point_t a, point_t b)
 {
     return std::acos(glm::dot(a, b) / glm::length(a) / glm::length(b));
 }
 
-double get_rotation_angle(const gesture_state_t& state)
+double wf::touch::gesture_state_t::get_rotation_angle() const
 {
-    auto center = state.get_center();
+    auto center = get_center();
 
     double angle_sum = 0;
-    for (const auto& f : state.fingers)
+    for (const auto& f : fingers)
     {
         auto v1 = glm::normalize(f.second.origin - center.origin);
         auto v2 = glm::normalize(f.second.current - center.current);
         angle_sum += glm::orientedAngle(v1, v2);
     }
 
-    angle_sum /= state.fingers.size();
+    angle_sum /= fingers.size();
     return angle_sum;
 }
