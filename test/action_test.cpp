@@ -150,3 +150,20 @@ TEST_CASE("wf::touch::pinch_action_t")
     ev.type = EVENT_TYPE_TOUCH_DOWN;
     CHECK(in.update_state(state, ev) == ACTION_STATUS_CANCELLED);
 }
+
+TEST_CASE("wf::touch::rotate_action_t")
+{
+    gesture_state_t state;
+    state.fingers[0] = finger_2p(0, 1, 1, 0);
+    state.fingers[1] = finger_2p(1, 0, 0, -1);
+    state.fingers[2] = finger_2p(0, -1, -1, 0);
+    state.fingers[3] = finger_2p(-1, 0, 0, 1);
+    CHECK(state.get_rotation_angle() == doctest::Approx(-M_PI / 2.0));
+
+    rotate_action_t rotate{-M_PI / 3.0};
+    gesture_event_t ev;
+    ev.type = EVENT_TYPE_MOTION;
+    CHECK(rotate.update_state(state, ev) == ACTION_STATUS_COMPLETED);
+
+    // TODO: incomplete tests
+}

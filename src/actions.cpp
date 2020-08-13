@@ -170,3 +170,33 @@ bool wf::touch::pinch_action_t::exceeds_tolerance(const gesture_state_t& state)
 {
     return glm::length(state.get_center().delta()) > this->get_move_tolerance();
 }
+
+/*- -------------------------- Rotate action ---------------------------------- */
+wf::touch::rotate_action_t::rotate_action_t(double threshold)
+{
+    this->threshold = threshold;
+}
+
+action_status_t wf::touch::rotate_action_t::update_state(const gesture_state_t& state,
+    const gesture_event_t& event)
+{
+    if (event.type != EVENT_TYPE_MOTION)
+    {
+        return ACTION_STATUS_CANCELLED;
+    }
+
+    bool running = true;
+    const double current_scale = state.get_rotation_angle();
+    if (((this->threshold < 0.0) && (current_scale <= threshold)) ||
+        ((this->threshold > 0.0) && (current_scale >= threshold)))
+    {
+        running = false;
+    }
+
+    return calculate_next_status(state, event, running);
+}
+
+bool wf::touch::rotate_action_t::exceeds_tolerance(const gesture_state_t& state)
+{
+    return glm::length(state.get_center().delta()) > this->get_move_tolerance();
+}

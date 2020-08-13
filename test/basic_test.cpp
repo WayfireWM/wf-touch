@@ -71,6 +71,18 @@ TEST_CASE("finger_t")
     CHECK(finger_in_dir(1, 1).delta() == point_t{1, 1});
 }
 
+static void compare_point(const point_t& a, const point_t& b)
+{
+    CHECK(a.x == doctest::Approx(b.x));
+    CHECK(a.y == doctest::Approx(b.y));
+}
+
+static void compare_finger(const finger_t& a, const finger_t& b)
+{
+    compare_point(a.origin, b.origin);
+    compare_point(a.current, b.current);
+}
+
 TEST_CASE("gesture_state_t")
 {
     gesture_state_t state;
