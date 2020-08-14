@@ -1,5 +1,22 @@
 #pragma once
 
+/**
+ * Touchscreen gesture library, designed for use in Wayfire (and elsewhere).
+ * Goal is to process touch events and detect various configurable gestures.
+ *
+ * High-level design:
+ * A gesture consists of one or more consecutive actions.
+ *
+ * An action is usually a simple part of the gesture which can be processed
+ * separately, for ex. touch down with 3 fingers, swipe in a direction, etc.
+ *
+ * When processing events, the gesture starts with its first action. Once it is
+ * completed, the processing continues with the next action, and so on, until
+ * either all actions are completed or an action cancels the gesture.
+ *
+ * Gestures are stored in the gesture manager, which is fed with input events
+ * from the compositor and forwards them to the appropriate gestures.
+ */
 #include <glm/vec2.hpp>
 #include <map>
 
