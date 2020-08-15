@@ -18,7 +18,10 @@
  * from the compositor and forwards them to the appropriate gestures.
  */
 #include <glm/vec2.hpp>
+#include <vector>
 #include <map>
+#include <memory>
+#include <functional>
 
 namespace wf
 {
@@ -56,6 +59,34 @@ struct finger_t
     double get_incorrect_drag_distance(uint32_t direction) const;
 };
 
+enum gesture_event_type_t
+{
+    /** Finger touched down the screen */
+    EVENT_TYPE_TOUCH_DOWN,
+    /** Finger was lifted off the screen */
+    EVENT_TYPE_TOUCH_UP,
+    /** Finger moved across the screen */
+    EVENT_TYPE_MOTION,
+};
+
+/**
+ * Represents a single update on the touch state.
+ */
+struct gesture_event_t
+{
+    /** type of the event */
+    gesture_event_type_t type;
+    /** timestamp of the event in milliseconds */
+    uint32_t time;
+    /** finger id which the event is about */
+    int32_t finger;
+
+    /** x coordinate of the finger if type is not TOUCH_UP */
+    double x;
+    /** y coordinate of the finger if type is not TOUCH_UP */
+    double y;
+};
+
 /**
  * Contains all fingers.
  */
@@ -64,6 +95,12 @@ struct gesture_state_t
   public:
     // finger_id -> finger_t
     std::map<int, finger_t> fingers;
+
+    /** Update fingers based on the event */
+    void update(const gesture_event_t& event);
+
+    /** Reset finger origin to current positions */
+    void reset_origin();
 
     /** Find the center points of the fingers. */
     finger_t get_center() const;
@@ -76,19 +113,6 @@ struct gesture_state_t
      * NB: Works only for rotation < 180 degrees.
      */
     double get_rotation_angle() const;
-};
-
-enum gesture_event_type_t
-{
-    EVENT_TYPE_TOUCH_DOWN,
-    EVENT_TYPE_TOUCH_UP,
-    EVENT_TYPE_MOTION,
-};
-
-struct gesture_event_t
-{
-    gesture_event_type_t type;
-    uint32_t time;
 };
 
 /**
@@ -362,4 +386,5 @@ class rotate_action_t : public gesture_action_t
     double threshold;
 };
 }
+
 }

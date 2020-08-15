@@ -11,3 +11,10 @@ action_test = executable(
     dependencies: wftouch,
     install: false)
 test('Action test', action_test)
+
+gesture_test = executable(
+    'gesture_test',
+    'gesture_test.cpp',
+    dependencies: wftouch,
+    install: false)
+test('Gesture test', gesture_test)

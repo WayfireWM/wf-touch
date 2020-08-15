@@ -92,6 +92,52 @@ TEST_CASE("gesture_state_t")
     compare_finger(state.get_center(), finger_in_dir(3, 4));
 }
 
+TEST_CASE("gesture_state_t::update")
+{
+    gesture_state_t state;
+
+    gesture_event_t ev;
+    ev.finger = 0;
+    ev.x = 4;
+    ev.y = 5;
+    ev.type = EVENT_TYPE_TOUCH_DOWN;
+    state.update(ev);
+    CHECK(state.fingers.size() == 1);
+    compare_finger(state.fingers[0], finger_2p(4, 5, 4, 5));
+
+    ev.finger = 0;
+    ev.x = 6;
+    ev.y = 7;
+    ev.type = EVENT_TYPE_MOTION;
+    state.update(ev);
+    CHECK(state.fingers.size() == 1);
+    compare_finger(state.fingers[0], finger_2p(4, 5, 6, 7));
+
+    ev.finger = 1;
+    ev.x = 7;
+    ev.y = -1;
+    ev.type = EVENT_TYPE_TOUCH_DOWN;
+    state.update(ev);
+    CHECK(state.fingers.size() == 2);
+    compare_finger(state.fingers[0], finger_2p(4, 5, 6, 7));
+    compare_finger(state.fingers[1], finger_2p(7, -1, 7, -1));
+
+    ev.type = EVENT_TYPE_TOUCH_UP;
+    ev.finger = 0;
+    state.update(ev);
+    CHECK(state.fingers.size() == 1);
+    compare_finger(state.fingers[1], finger_2p(7, -1, 7, -1));
+}
+
+TEST_CASE("gesture_state_t::reset_origin")
+{
+    gesture_state_t state;
+    state.fingers[0] = finger_in_dir(6, 7);
+    state.reset_origin();
+    CHECK(state.fingers.size() == 1);
+    compare_finger(state.fingers[0], finger_2p(6, 7, 6, 7));
+}
+
 class action_test_t : public gesture_action_t
 {
   public:

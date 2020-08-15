@@ -28,6 +28,30 @@ finger_t wf::touch::gesture_state_t::get_center() const
     return center;
 }
 
+void wf::touch::gesture_state_t::update(const gesture_event_t& event)
+{
+    switch (event.type)
+    {
+      case EVENT_TYPE_TOUCH_DOWN:
+        fingers[event.finger].origin = {event.x, event.y};
+        // fallthrough
+      case EVENT_TYPE_MOTION:
+        fingers[event.finger].current = {event.x, event.y};
+        break;
+      case EVENT_TYPE_TOUCH_UP:
+        fingers.erase(event.finger);
+        break;
+    }
+}
+
+void wf::touch::gesture_state_t::reset_origin()
+{
+    for (auto& f : fingers)
+    {
+        f.second.origin = f.second.current;
+    }
+}
+
 void wf::touch::gesture_action_t::set_move_tolerance(double tolerance)
 {
     this->tolerance = tolerance;
