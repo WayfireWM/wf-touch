@@ -99,3 +99,119 @@ bool wf::touch::touch_target_t::contains(const point_t& pt) const
     return x <= pt.x && pt.x < x + width &&
         y <= pt.y && pt.y < y + height;
 }
+
+class wf::touch::gesture_t::impl
+{
+  public:
+    gesture_callback_t completed;
+    gesture_callback_t cancelled;
+
+    std::vector<std::unique_ptr<gesture_action_t>> actions;
+    size_t current_action = 0;
+    action_status_t status = ACTION_STATUS_CANCELLED;
+
+    gesture_state_t finger_state;
+};
+
+wf::touch::gesture_t::gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
+        gesture_callback_t completed, gesture_callback_t cancelled)
+{
+    assert(!actions.empty());
+    this->priv = std::make_unique<impl>();
+    priv->actions = std::move(actions);
+    priv->completed = completed;
+    priv->cancelled = cancelled;
+}
+
+wf::touch::gesture_t::~gesture_t() = default;
+
+double wf::touch::gesture_t::get_progress() const
+{
+    if (priv->status == ACTION_STATUS_CANCELLED)
+    {
+        return 0.0;
+    }
+
+    return 1.0 * priv->current_action / priv->actions.size();
+}
+
+void wf::touch::gesture_t::update_state(const gesture_event_t& event)
+{
+    if (priv->status != ACTION_STATUS_RUNNING)
+    {
+        // nothing to do
+        return;
+    }
+
+    auto& actions = priv->actions;
+    auto& idx = priv->current_action;
+
+    auto old_finger_state = priv->finger_state;
+    priv->finger_state.update(event);
+
+    auto next_action = [&] ()
+    {
+        ++idx;
+        if (idx < actions.size())
+        {
+            actions[idx]->reset(event.time);
+            priv->finger_state.reset_origin();
+        }
+    };
+
+    /** Go through all ALREADY_COMPLETED gestures */
+    action_status_t status;
+    while (idx < actions.size())
+    {
+        status = actions[idx]->update_state(priv->finger_state, event);
+        if (status == ACTION_STATUS_ALREADY_COMPLETED)
+        {
+            /* Make sure that the previous finger state is marked as origin,
+             * because the last update is not consumed by the last action */
+            priv->finger_state = old_finger_state;
+            next_action();
+            priv->finger_state.update(event);
+        } else
+        {
+            break;
+        }
+    }
+
+    switch (status)
+    {
+      case ACTION_STATUS_RUNNING:
+        return; // nothing more to do
+      case ACTION_STATUS_CANCELLED:
+        priv->status = ACTION_STATUS_CANCELLED;
+        break;
+      case ACTION_STATUS_ALREADY_COMPLETED:
+        // fallthrough
+      case ACTION_STATUS_COMPLETED:
+        if (idx < actions.size())
+        {
+            next_action();
+            if (idx == actions.size())
+            {
+                priv->status = ACTION_STATUS_COMPLETED;
+            }
+        }
+    }
+
+    if (priv->status == ACTION_STATUS_CANCELLED)
+    {
+        priv->cancelled();
+    }
+
+    if (priv->status == ACTION_STATUS_COMPLETED)
+    {
+        priv->completed();
+    }
+}
+
+void wf::touch::gesture_t::reset(uint32_t time)
+{
+    priv->status = ACTION_STATUS_RUNNING;
+    priv->finger_state.fingers.clear();
+    priv->current_action = 0;
+    priv->actions[0]->reset(time);
+}

@@ -156,9 +156,7 @@ class gesture_action_t
     uint32_t get_duration() const;
 
     /**
-     * Update the action's state according to the next state. Note that in
-     * case of a touch up event, the state still contains the to-be-removed
-     * touch point.
+     * Update the action's state according to the new state.
      *
      * NOTE: The actual implementation should update the @start_time field.
      *
@@ -384,6 +382,50 @@ class rotate_action_t : public gesture_action_t
 
   private:
     double threshold;
+};
+
+using gesture_callback_t = std::function<void()>;
+
+/**
+ * Represents a series of actions forming a gesture together.
+ */
+class gesture_t
+{
+  public:
+    /**
+     * Create a new gesture consisting of the given actions.
+     *
+     * @param actions The actions the gesture consists of.
+     * @param completed The callback to execute each time the gesture is
+     *   completed.
+     * @param cancelled The callback to execute each time the gesture is
+     *   cancelled.
+     */
+    gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
+        gesture_callback_t completed, gesture_callback_t cancelled = [](){});
+    ~gesture_t();
+
+    /** @return What percentage of the actions are complete. */
+    double get_progress() const;
+
+    /**
+     * Update the gesture state.
+     *
+     * @param event The next event.
+     */
+    void update_state(const gesture_event_t& event);
+
+    /**
+     * Reset the gesture state.
+     *
+     * @param time The time of the event causing the start of gesture
+     *   recognition, this is typically the first touch event.
+     */
+    void reset(uint32_t time);
+
+  private:
+    class impl;
+    std::unique_ptr<impl> priv;
 };
 }
 
