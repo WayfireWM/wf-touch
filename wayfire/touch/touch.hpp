@@ -13,9 +13,6 @@
  * When processing events, the gesture starts with its first action. Once it is
  * completed, the processing continues with the next action, and so on, until
  * either all actions are completed or an action cancels the gesture.
- *
- * Gestures are stored in the gesture manager, which is fed with input events
- * from the compositor and forwards them to the appropriate gestures.
  */
 #include <glm/vec2.hpp>
 #include <vector>
