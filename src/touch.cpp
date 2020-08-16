@@ -84,7 +84,7 @@ action_status_t wf::touch::gesture_action_t::calculate_next_status(
     return running ? ACTION_STATUS_RUNNING : ACTION_STATUS_COMPLETED;
 }
 
-bool wf::touch::gesture_action_t::exceeds_tolerance(const gesture_state_t& state)
+bool wf::touch::gesture_action_t::exceeds_tolerance(const gesture_state_t&)
 {
     return false;
 }
