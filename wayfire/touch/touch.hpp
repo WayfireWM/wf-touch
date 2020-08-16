@@ -78,10 +78,8 @@ struct gesture_event_t
     /** finger id which the event is about */
     int32_t finger;
 
-    /** x coordinate of the finger if type is not TOUCH_UP */
-    double x;
-    /** y coordinate of the finger if type is not TOUCH_UP */
-    double y;
+    /** coordinates of the finger */
+    point_t pos;
 };
 
 /**

@@ -98,24 +98,21 @@ TEST_CASE("gesture_state_t::update")
 
     gesture_event_t ev;
     ev.finger = 0;
-    ev.x = 4;
-    ev.y = 5;
+    ev.pos = {4, 5};
     ev.type = EVENT_TYPE_TOUCH_DOWN;
     state.update(ev);
     CHECK(state.fingers.size() == 1);
     compare_finger(state.fingers[0], finger_2p(4, 5, 4, 5));
 
     ev.finger = 0;
-    ev.x = 6;
-    ev.y = 7;
+    ev.pos = {6, 7};
     ev.type = EVENT_TYPE_MOTION;
     state.update(ev);
     CHECK(state.fingers.size() == 1);
     compare_finger(state.fingers[0], finger_2p(4, 5, 6, 7));
 
     ev.finger = 1;
-    ev.x = 7;
-    ev.y = -1;
+    ev.pos = {7, -1};
     ev.type = EVENT_TYPE_TOUCH_DOWN;
     state.update(ev);
     CHECK(state.fingers.size() == 2);

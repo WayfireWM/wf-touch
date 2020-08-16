@@ -33,10 +33,10 @@ void wf::touch::gesture_state_t::update(const gesture_event_t& event)
     switch (event.type)
     {
       case EVENT_TYPE_TOUCH_DOWN:
-        fingers[event.finger].origin = {event.x, event.y};
+        fingers[event.finger].origin = event.pos;
         // fallthrough
       case EVENT_TYPE_MOTION:
-        fingers[event.finger].current = {event.x, event.y};
+        fingers[event.finger].current = event.pos;
         break;
       case EVENT_TYPE_TOUCH_UP:
         fingers.erase(event.finger);

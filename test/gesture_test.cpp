@@ -34,7 +34,7 @@ TEST_CASE("wf::touch::gesture_t")
     swipe.reset(0);
     gesture_event_t touch_down;
     touch_down.finger = 0;
-    touch_down.x = touch_down.y = 0;
+    touch_down.pos = {0, 0};
     touch_down.type = EVENT_TYPE_TOUCH_DOWN;
     touch_down.time = 0;
     swipe.update_state(touch_down);
@@ -44,8 +44,7 @@ TEST_CASE("wf::touch::gesture_t")
     {
         gesture_event_t motion_left;
         motion_left.finger = 0;
-        motion_left.x = -10;
-        motion_left.y = 0;
+        motion_left.pos = {-10, 0};
         motion_left.time = 10;
         motion_left.type = EVENT_TYPE_MOTION;
         swipe.update_state(motion_left);
@@ -55,8 +54,8 @@ TEST_CASE("wf::touch::gesture_t")
         CHECK(swipe.get_progress() >= 0.6);
 
         gesture_event_t motion_right = motion_left;
+        motion_right.pos = {0, 0};
         motion_right.time = 20;
-        motion_right.x = 0;
         swipe.update_state(motion_right);
         CHECK(cancelled == 0);
         CHECK(completed == 1);
