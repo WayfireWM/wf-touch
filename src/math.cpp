@@ -7,23 +7,32 @@
 #define _ << " " <<
 #define debug(x) #x << " = " << (x)
 
+static constexpr double DIRECTION_TAN_THRESHOLD = 1.0 / 3.0;
+
 using namespace wf::touch;
 uint32_t wf::touch::finger_t::get_direction() const
 {
-    auto delta = this->delta();
+    double to_left = this->get_drag_distance(MOVE_DIRECTION_LEFT);
+    double to_right = this->get_drag_distance(MOVE_DIRECTION_RIGHT);
+    double to_up = this->get_drag_distance(MOVE_DIRECTION_UP);
+    double to_down = this->get_drag_distance(MOVE_DIRECTION_DOWN);
+
+    double horizontal = std::max(to_left, to_right);
+    double vertical = std::max(to_up, to_down);
+
     uint32_t result = 0;
-    if (delta.x < 0)
+    if (to_left > 0 && to_left / vertical >= DIRECTION_TAN_THRESHOLD)
     {
         result |= MOVE_DIRECTION_LEFT;
-    } else if (delta.x > 0)
+    } else if (to_right > 0 && to_right / vertical >= DIRECTION_TAN_THRESHOLD)
     {
         result |= MOVE_DIRECTION_RIGHT;
     }
 
-    if (delta.y < 0)
+    if (to_up > 0 && to_up / horizontal >= DIRECTION_TAN_THRESHOLD)
     {
         result |= MOVE_DIRECTION_UP;
-    } else if (delta.y > 0)
+    } else if (to_down > 0 && to_down / horizontal >= DIRECTION_TAN_THRESHOLD)
     {
         result |= MOVE_DIRECTION_DOWN;
     }

@@ -8,6 +8,7 @@ TEST_CASE("get_move_in_direction")
     CHECK(finger_in_dir(-1, -1).get_direction() == lu);
     CHECK(finger_in_dir(1, 1).get_direction() == rd);
     CHECK(finger_in_dir(0, 0).get_direction() == 0);
+    CHECK(finger_in_dir(-10, 1).get_direction() == MOVE_DIRECTION_LEFT);
 }
 
 TEST_CASE("get_drag_distance")
