@@ -190,11 +190,13 @@ void wf::touch::gesture_t::update_state(const gesture_event_t& event)
         if (idx < actions.size())
         {
             next_action();
-            if (idx == actions.size())
-            {
-                priv->status = ACTION_STATUS_COMPLETED;
-            }
         }
+
+        if (idx == actions.size())
+        {
+            priv->status = ACTION_STATUS_COMPLETED;
+        }
+        break;
     }
 
     if (priv->status == ACTION_STATUS_CANCELLED)
