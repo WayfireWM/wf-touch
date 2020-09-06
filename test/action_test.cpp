@@ -4,18 +4,33 @@
 
 TEST_CASE("touch_action_t")
 {
-    touch_action_t touch_down{1, true};
+    touch_action_t touch_down{2, true};
     touch_down.set_target({0, 0, 10, 10});
     touch_down.set_duration(150);
+    touch_down.set_move_tolerance(5);
 
     gesture_event_t event_down;
     event_down.type = EVENT_TYPE_TOUCH_DOWN;
-    event_down.time = 150;
+    event_down.time = 75;
 
-    // check normal operation
+    // check normal operation, with tolerance
     gesture_state_t state;
-    state.fingers[0] = finger_2p(0, 0, 1, 1);
+    state.fingers[0] = finger_2p(0, 0, 0, 0);
     touch_down.reset(0);
+    CHECK(touch_down.update_state(state, event_down) == ACTION_STATUS_RUNNING);
+
+    gesture_event_t motion;
+    motion.type = EVENT_TYPE_MOTION;
+    motion.finger = 0;
+    motion.time = 100;
+    motion.pos = {1, 1};
+    state.fingers[0] = finger_2p(0, 0, 1, 1);
+    CHECK(touch_down.update_state(state, motion) == ACTION_STATUS_RUNNING);
+
+    state.fingers[1] = finger_in_dir(2, 2);
+    event_down.finger = 2;
+    event_down.pos = {2, 2};
+    event_down.time = 150;
     CHECK(touch_down.update_state(state, event_down) == ACTION_STATUS_COMPLETED);
 
     // check outside of bounds
@@ -43,7 +58,7 @@ TEST_CASE("touch_action_t")
     state.fingers.erase(1);
     CHECK(touch_up.update_state(state, event_up) == ACTION_STATUS_COMPLETED);
 
-    // check tolerance
+    // check tolerance exceeded
     state.fingers[1] = finger_2p(2, 2, 2, 3);
     touch_up.set_move_tolerance(0);
     touch_up.reset(0);

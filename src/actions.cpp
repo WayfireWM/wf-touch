@@ -48,7 +48,8 @@ void wf::touch::touch_action_t::reset(uint32_t time)
 action_status_t wf::touch::touch_action_t::update_state(
     const gesture_state_t& state, const gesture_event_t& event)
 {
-    if (this->type != event.type)
+    // Allow motion events because of tolerance
+    if (this->type != event.type && event.type != EVENT_TYPE_MOTION)
     {
         return ACTION_STATUS_CANCELLED;
     }
@@ -61,6 +62,11 @@ action_status_t wf::touch::touch_action_t::update_state(
         {
             return ACTION_STATUS_CANCELLED;
         }
+    }
+
+    if (event.type == EVENT_TYPE_MOTION)
+    {
+        return calculate_next_status(state, event, true);
     }
 
     if (this->type == EVENT_TYPE_TOUCH_DOWN)
