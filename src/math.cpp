@@ -1,3 +1,5 @@
+#define GLM_ENABLE_EXPERIMENTAL // for glm::orientedAngle
+
 #include <wayfire/touch/touch.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/vector_angle.hpp>
