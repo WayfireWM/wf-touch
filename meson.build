@@ -1,5 +1,6 @@
 project('wf-touch', ['cpp'],
 		    version : '0.0',
+		    meson_version: '>=0.47.0',
 		    default_options : ['cpp_std=c++17'])
 
 glm = dependency('glm')
@@ -15,6 +16,8 @@ wftouch_lib = static_library('wftouch', ['src/touch.cpp', 'src/actions.cpp', 'sr
 wftouch = declare_dependency(link_with: wftouch_lib,
     include_directories: wf_touch_inc_dirs, dependencies: glm)
 
-if get_option('tests')
+doctest = dependency('doctest', required: get_option('tests'))
+
+if doctest.found()
     subdir('test')
 endif
