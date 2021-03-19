@@ -15,4 +15,6 @@ wftouch_lib = static_library('wftouch', ['src/touch.cpp', 'src/actions.cpp', 'sr
 wftouch = declare_dependency(link_with: wftouch_lib,
     include_directories: wf_touch_inc_dirs, dependencies: glm)
 
-subdir('test')
+if get_option('tests')
+    subdir('test')
+endif
