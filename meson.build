@@ -3,7 +3,10 @@ project('wf-touch', ['cpp'],
 		    meson_version: '>=0.47.0',
 		    default_options : ['cpp_std=c++17'])
 
-glm = dependency('glm')
+glm = dependency('glm', required: false)
+if not glm.found() and not meson.get_compiler('cpp').check_header('glm/glm.hpp')
+  error('GLM not found, and directly using the header \'glm/glm.hpp\' is not possible.')
+endif
 
 wf_touch_inc_dirs = include_directories('.')
 install_headers([
