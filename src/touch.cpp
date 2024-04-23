@@ -1,9 +1,5 @@
 #include <wayfire/touch/touch.hpp>
 
-#include <iostream>
-#define _ << " " <<
-#define debug(x) #x << " = " << (x)
-
 using namespace wf::touch;
 
 point_t wf::touch::finger_t::delta() const
@@ -52,9 +48,10 @@ void wf::touch::gesture_state_t::reset_origin()
     }
 }
 
-void wf::touch::gesture_action_t::set_move_tolerance(double tolerance)
+wf::touch::gesture_action_t& wf::touch::gesture_action_t::set_move_tolerance(double tolerance)
 {
     this->tolerance = tolerance;
+    return *this;
 }
 
 double wf::touch::gesture_action_t::get_move_tolerance() const
@@ -62,9 +59,10 @@ double wf::touch::gesture_action_t::get_move_tolerance() const
     return this->tolerance;
 }
 
-void wf::touch::gesture_action_t::set_duration(uint32_t duration)
+wf::touch::gesture_action_t& wf::touch::gesture_action_t::set_duration(uint32_t duration)
 {
     this->duration = duration;
+    return *this;
 }
 
 uint32_t wf::touch::gesture_action_t::get_duration() const
@@ -216,4 +214,23 @@ void wf::touch::gesture_t::reset(uint32_t time)
     priv->finger_state.fingers.clear();
     priv->current_action = 0;
     priv->actions[0]->reset(time);
+}
+
+wf::touch::gesture_builder_t::gesture_builder_t() {}
+
+wf::touch::gesture_builder_t& wf::touch::gesture_builder_t::on_completed(gesture_callback_t callback)
+{
+    this->_on_completed = callback;
+    return *this;
+}
+
+wf::touch::gesture_builder_t& wf::touch::gesture_builder_t::on_cancelled(gesture_callback_t callback)
+{
+    this->_on_cancelled = callback;
+    return *this;
+}
+
+wf::touch::gesture_t wf::touch::gesture_builder_t::build()
+{
+    return gesture_t(std::move(actions), _on_completed, _on_cancelled);
 }

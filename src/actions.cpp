@@ -1,10 +1,6 @@
 #include <wayfire/touch/touch.hpp>
 #include <glm/glm.hpp>
 
-#include <iostream>
-#define _ << " " <<
-#define debug(x) #x << " = " << (x)
-
 using namespace wf::touch;
 /* -------------------------- Touch action ---------------------------------- */
 wf::touch::touch_action_t::touch_action_t(int cnt_fingers, bool touch_down)
@@ -18,9 +14,10 @@ wf::touch::touch_action_t::touch_action_t(int cnt_fingers, bool touch_down)
     this->target.height = 2e9;
 }
 
-void wf::touch::touch_action_t::set_target(const touch_target_t& target)
+wf::touch::touch_action_t& wf::touch::touch_action_t::set_target(const touch_target_t& target)
 {
     this->target = target;
+    return *this;
 }
 
 static double find_max_delta(const gesture_state_t& state)

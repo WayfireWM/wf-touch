@@ -18,18 +18,15 @@ TEST_CASE("wf::touch::gesture_t")
         ++cancelled;
     };
 
-    auto down = std::make_unique<touch_action_t>(1, true);
-    auto delay1 = std::make_unique<hold_action_t>(5);
-    auto drag1 = std::make_unique<drag_action_t>(MOVE_DIRECTION_LEFT, 10);
-    auto delay2 = std::make_unique<hold_action_t>(5);
-    auto drag2 = std::make_unique<drag_action_t>(MOVE_DIRECTION_RIGHT, 10);
-    std::vector<std::unique_ptr<gesture_action_t>> actions;
-    actions.emplace_back(std::move(down));
-    actions.emplace_back(std::move(delay1));
-    actions.emplace_back(std::move(drag1));
-    actions.emplace_back(std::move(delay2));
-    actions.emplace_back(std::move(drag2));
-    gesture_t swipe{std::move(actions), callback1, callback2};
+    gesture_t swipe = gesture_builder_t()
+        .action(touch_action_t(1, true))
+        .action(hold_action_t(5))
+        .action(drag_action_t(MOVE_DIRECTION_LEFT, 10))
+        .action(hold_action_t(5))
+        .action(drag_action_t(MOVE_DIRECTION_RIGHT, 10))
+        .on_completed(callback1)
+        .on_cancelled(callback2)
+        .build();
 
     swipe.reset(0);
     gesture_event_t touch_down;

@@ -134,8 +134,10 @@ class gesture_action_t
     /**
      * Set the move tolerance.
      * This is the maximum amount the fingers may move in unwanted directions.
+     *
+     * @return this
      */
-    void set_move_tolerance(double tolerance);
+    gesture_action_t& set_move_tolerance(double tolerance);
 
     /** @return The move tolerance. */
     double get_move_tolerance() const;
@@ -144,8 +146,10 @@ class gesture_action_t
      * Set the duration of the action in milliseconds.
      * This is the maximal time needed for this action to be happening to
      * consider it complete.
+     *
+     * @return this
      */
-    void set_duration(uint32_t duration);
+    gesture_action_t& set_duration(uint32_t duration);
 
     /** @return The duration of the gesture action. */
     uint32_t get_duration() const;
@@ -197,6 +201,18 @@ class gesture_action_t
     uint32_t duration = -1; // maximal duration
 };
 
+#define WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(x) \
+    x& set_move_tolerance(double tolerance) \
+    { \
+        gesture_action_t::set_move_tolerance(tolerance); \
+        return *this; \
+    } \
+    x& set_duration(uint32_t duration) \
+    { \
+        gesture_action_t::set_duration(duration); \
+        return *this; \
+    }
+
 /**
  * Represents a target area where the touch event takes place.
  */
@@ -224,11 +240,14 @@ class touch_action_t : public gesture_action_t
      * @param touch_down Whether the action is touch down or touch up.
      */
     touch_action_t(int cnt_fingers, bool touch_down);
+    WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(touch_action_t);
 
     /**
      * Set the target area of this gesture.
+     *
+     * @return this
      */
-    void set_target(const touch_target_t& target);
+    touch_action_t& set_target(const touch_target_t& target);
 
     /**
      * Mark the action as completed iff state has the right amount of fingers
@@ -265,6 +284,7 @@ class hold_action_t : public gesture_action_t
      *   complete.
      */
     hold_action_t(int32_t threshold);
+    WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(hold_action_t);
 
     /**
      * The action is already completed iff no fingers have been added or
@@ -295,6 +315,7 @@ class drag_action_t : public gesture_action_t
      * @param threshold The distance that needs to be covered.
      */
     drag_action_t(uint32_t direction, double threshold);
+    WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(drag_action_t);
 
     /**
      * The action is already completed iff no fingers have been added or
@@ -329,6 +350,7 @@ class pinch_action_t : public gesture_action_t
      *   the actual pinch scale is respectively less/more than threshold.
      */
     pinch_action_t(double threshold);
+    WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(pinch_action_t);
 
     /**
      * The action is already completed iff no fingers have been added or
@@ -361,6 +383,7 @@ class rotate_action_t : public gesture_action_t
      *   the actual rotation angle is respectively less/more than threshold.
      */
     rotate_action_t(double threshold);
+    WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(rotate_action_t);
 
     /**
      * The action is already completed iff no fingers have been added or
@@ -398,6 +421,7 @@ class gesture_t
      */
     gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
         gesture_callback_t completed, gesture_callback_t cancelled = [](){});
+
     ~gesture_t();
 
     /** @return What percentage of the actions are complete. */
@@ -422,6 +446,30 @@ class gesture_t
     class impl;
     std::unique_ptr<impl> priv;
 };
-}
 
+/**
+ * A helper class to facilitate gesture construction.
+ */
+class gesture_builder_t
+{
+  public:
+    gesture_builder_t();
+
+    template<class ActionType>
+    gesture_builder_t& action(const ActionType& action)
+    {
+        actions.push_back(std::make_unique<ActionType>(action));
+        return *this;
+    }
+
+    gesture_builder_t& on_completed(gesture_callback_t callback);
+    gesture_builder_t& on_cancelled(gesture_callback_t callback);
+    gesture_t build();
+
+  private:
+    gesture_callback_t _on_completed = [](){};
+    gesture_callback_t _on_cancelled = [](){};
+    std::vector<std::unique_ptr<gesture_action_t>> actions;
+};
+}
 }
