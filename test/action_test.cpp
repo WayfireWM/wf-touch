@@ -40,9 +40,9 @@ TEST_CASE("touch_action_t")
     state.fingers[0] = finger_2p(0, 0, 0, 0);
 
     // check timeout
-    event_down.time = 151;
     touch_down.reset(0);
-    CHECK(touch_down.update_state(state, event_down) == ACTION_STATUS_CANCELLED);
+    CHECK(touch_down.update_state(state, gesture_event_t{.type = EVENT_TYPE_TIMEOUT}) ==
+        ACTION_STATUS_CANCELLED);
 
     touch_action_t touch_up{2, false};
     gesture_event_t event_up;
@@ -79,9 +79,7 @@ TEST_CASE("wf::touch::hold_action_t")
     ev.time = 49;
     ev.type = EVENT_TYPE_MOTION;
     CHECK(hold.update_state(state, ev) == ACTION_STATUS_RUNNING);
-    ev.time = 50;
-    ev.type = EVENT_TYPE_TOUCH_UP;
-    CHECK(hold.update_state(state, ev) == ACTION_STATUS_ALREADY_COMPLETED);
+    CHECK(hold.update_state(state, gesture_event_t{.type = EVENT_TYPE_TIMEOUT}) == ACTION_STATUS_COMPLETED);
 
     // check finger breaks action
     hold.reset(0);

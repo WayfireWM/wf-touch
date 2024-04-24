@@ -37,6 +37,8 @@ void wf::touch::gesture_state_t::update(const gesture_event_t& event)
       case EVENT_TYPE_TOUCH_UP:
         fingers.erase(event.finger);
         break;
+      default:
+        break;
     }
 }
 
@@ -48,43 +50,15 @@ void wf::touch::gesture_state_t::reset_origin()
     }
 }
 
-wf::touch::gesture_action_t& wf::touch::gesture_action_t::set_move_tolerance(double tolerance)
-{
-    this->tolerance = tolerance;
-    return *this;
-}
-
-double wf::touch::gesture_action_t::get_move_tolerance() const
-{
-    return this->tolerance;
-}
-
 wf::touch::gesture_action_t& wf::touch::gesture_action_t::set_duration(uint32_t duration)
 {
     this->duration = duration;
     return *this;
 }
 
-uint32_t wf::touch::gesture_action_t::get_duration() const
+std::optional<uint32_t> wf::touch::gesture_action_t::get_duration() const
 {
     return this->duration;
-}
-
-action_status_t wf::touch::gesture_action_t::calculate_next_status(
-    const gesture_state_t& state, const gesture_event_t& last_event, bool running)
-{
-    uint32_t elapsed = last_event.time - this->start_time;
-    if ((elapsed > this->get_duration()) || exceeds_tolerance(state))
-    {
-        return ACTION_STATUS_CANCELLED;
-    }
-
-    return running ? ACTION_STATUS_RUNNING : ACTION_STATUS_COMPLETED;
-}
-
-bool wf::touch::gesture_action_t::exceeds_tolerance(const gesture_state_t&)
-{
-    return false;
 }
 
 void wf::touch::gesture_action_t::reset(uint32_t time)
@@ -109,7 +83,84 @@ class wf::touch::gesture_t::impl
     action_status_t status = ACTION_STATUS_CANCELLED;
 
     gesture_state_t finger_state;
+    std::unique_ptr<timer_interface_t> timer;
+
+    void start_gesture(uint32_t time)
+    {
+        status = ACTION_STATUS_RUNNING;
+        finger_state.fingers.clear();
+        current_action = 0;
+        actions[0]->reset(time);
+        start_timer();
+    }
+
+    void start_timer()
+    {
+        if (auto dur = actions[current_action]->get_duration())
+        {
+            timer->set_timeout(*dur, [=] ()
+            {
+                update_state(gesture_event_t{.type = EVENT_TYPE_TIMEOUT});
+            });
+        }
+    }
+
+    void update_state(const gesture_event_t& event)
+    {
+        if (status != ACTION_STATUS_RUNNING)
+        {
+            // nothing to do
+            return;
+        }
+
+        auto& idx = current_action;
+
+        auto old_finger_state = finger_state;
+        finger_state.update(event);
+
+        auto next_action = [&] () -> bool
+        {
+            timer->reset();
+            ++idx;
+            if (idx < actions.size())
+            {
+                actions[idx]->reset(event.time);
+                finger_state.reset_origin();
+                start_timer();
+                return true;
+            }
+
+            return false;
+        };
+
+        action_status_t pending_status = actions[idx]->update_state(finger_state, event);
+        switch (pending_status)
+        {
+          case ACTION_STATUS_RUNNING:
+            return; // nothing more to do
+
+          case ACTION_STATUS_CANCELLED:
+            this->status = ACTION_STATUS_CANCELLED;
+            timer->reset();
+            cancelled();
+            return;
+
+          case ACTION_STATUS_COMPLETED:
+            bool has_next = next_action();
+            if (!has_next)
+            {
+                this->status = ACTION_STATUS_COMPLETED;
+                completed();
+                return;
+            }
+        }
+    }
 };
+
+void wf::touch::gesture_t::set_timer(std::unique_ptr<timer_interface_t> timer)
+{
+    priv->timer = std::move(timer);
+}
 
 wf::touch::gesture_t::gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
         gesture_callback_t completed, gesture_callback_t cancelled)
@@ -135,85 +186,24 @@ double wf::touch::gesture_t::get_progress() const
 
 void wf::touch::gesture_t::update_state(const gesture_event_t& event)
 {
-    if (priv->status != ACTION_STATUS_RUNNING)
-    {
-        // nothing to do
-        return;
-    }
+    assert(priv->timer);
+    priv->update_state(event);
+}
 
-    auto& actions = priv->actions;
-    auto& idx = priv->current_action;
-
-    auto old_finger_state = priv->finger_state;
-    priv->finger_state.update(event);
-
-    auto next_action = [&] ()
-    {
-        ++idx;
-        if (idx < actions.size())
-        {
-            actions[idx]->reset(event.time);
-            priv->finger_state.reset_origin();
-        }
-    };
-
-    /** Go through all ALREADY_COMPLETED gestures */
-    action_status_t status;
-    while (idx < actions.size())
-    {
-        status = actions[idx]->update_state(priv->finger_state, event);
-        if (status == ACTION_STATUS_ALREADY_COMPLETED)
-        {
-            /* Make sure that the previous finger state is marked as origin,
-             * because the last update is not consumed by the last action */
-            priv->finger_state = old_finger_state;
-            next_action();
-            priv->finger_state.update(event);
-        } else
-        {
-            break;
-        }
-    }
-
-    switch (status)
-    {
-      case ACTION_STATUS_RUNNING:
-        return; // nothing more to do
-      case ACTION_STATUS_CANCELLED:
-        priv->status = ACTION_STATUS_CANCELLED;
-        break;
-      case ACTION_STATUS_ALREADY_COMPLETED:
-        // fallthrough
-      case ACTION_STATUS_COMPLETED:
-        if (idx < actions.size())
-        {
-            next_action();
-        }
-
-        if (idx == actions.size())
-        {
-            priv->status = ACTION_STATUS_COMPLETED;
-        }
-        break;
-    }
-
-    if (priv->status == ACTION_STATUS_CANCELLED)
-    {
-        priv->cancelled();
-    }
-
-    if (priv->status == ACTION_STATUS_COMPLETED)
-    {
-        priv->completed();
-    }
+wf::touch::action_status_t wf::touch::gesture_t::get_status() const
+{
+    return priv->status;
 }
 
 void wf::touch::gesture_t::reset(uint32_t time)
 {
-    priv->status = ACTION_STATUS_RUNNING;
-    priv->finger_state.fingers.clear();
-    priv->current_action = 0;
-    priv->actions[0]->reset(time);
+    assert(priv->timer);
+    if (priv->status == ACTION_STATUS_RUNNING)
+    {
+        return;
+    }
+
+    priv->start_gesture(time);
 }
 
 wf::touch::gesture_builder_t::gesture_builder_t() {}

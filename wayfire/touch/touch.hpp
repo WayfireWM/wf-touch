@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <optional>
 
 namespace wf
 {
@@ -64,6 +65,8 @@ enum gesture_event_type_t
     EVENT_TYPE_TOUCH_UP,
     /** Finger moved across the screen */
     EVENT_TYPE_MOTION,
+    /** Timeout since action start */
+    EVENT_TYPE_TIMEOUT,
 };
 
 /**
@@ -117,8 +120,6 @@ enum action_status_t
 {
     /** Action is done after this event. */
     ACTION_STATUS_COMPLETED,
-    /** Action was completed before this event (for example, hold action). */
-    ACTION_STATUS_ALREADY_COMPLETED,
     /** Action is still running after this event. */
     ACTION_STATUS_RUNNING,
     /** The whole gesture should be cancelled. */
@@ -132,18 +133,11 @@ class gesture_action_t
 {
   public:
     /**
-     * Set the move tolerance.
-     * This is the maximum amount the fingers may move in unwanted directions.
-     *
-     * @return this
-     */
-    gesture_action_t& set_move_tolerance(double tolerance);
-
-    /** @return The move tolerance. */
-    double get_move_tolerance() const;
-
-    /**
      * Set the duration of the action in milliseconds.
+     *
+     * After the duration times out, the action will receive
+     *
+     *
      * This is the maximal time needed for this action to be happening to
      * consider it complete.
      *
@@ -152,7 +146,7 @@ class gesture_action_t
     gesture_action_t& set_duration(uint32_t duration);
 
     /** @return The duration of the gesture action. */
-    uint32_t get_duration() const;
+    std::optional<uint32_t> get_duration() const;
 
     /**
      * Update the action's state according to the new state.
@@ -180,31 +174,14 @@ class gesture_action_t
     /** Time of the first event. */
     int64_t start_time;
 
-    /**
-     * Calculate the correct action status. It is determined as follows:
-     * 1. action has timed out(i.e start_time + duration > timestamp) => CANCELLED
-     * 1. finger movement exceeds move tolerance => CANCELLED
-     * 2. @running is false and gesture has not timed out => COMPLETED
-     * 3. @running is true and gesture has not timed out => RUNNING
-     */
-    action_status_t calculate_next_status(const gesture_state_t& state,
-        const gesture_event_t& last_event, bool running);
-
-    /**
-     * Calculate whether movement exceeds tolerance.
-     * By default, tolerance is ignored, so actions should override this function.
-     */
-    virtual bool exceeds_tolerance(const gesture_state_t& state);
-
   private:
-    double tolerance = 1e18; // very big
-    uint32_t duration = -1; // maximal duration
+    std::optional<uint32_t> duration; // maximal duration
 };
 
 #define WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(x) \
     x& set_move_tolerance(double tolerance) \
     { \
-        gesture_action_t::set_move_tolerance(tolerance); \
+        this->move_tolerance = tolerance; \
         return *this; \
     } \
     x& set_duration(uint32_t duration) \
@@ -260,12 +237,13 @@ class touch_action_t : public gesture_action_t
 
   protected:
     /** @return True if the fingers have moved too much. */
-    bool exceeds_tolerance(const gesture_state_t& state) override;
+    bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
     int cnt_fingers;
-    int released_fingers;
+    int cnt_touch_events;
     gesture_event_type_t type;
+    uint32_t move_tolerance = 1e9;
 
     touch_target_t target;
 };
@@ -295,10 +273,10 @@ class hold_action_t : public gesture_action_t
 
   protected:
     /** @return True if the fingers have moved too much. */
-    bool exceeds_tolerance(const gesture_state_t& state) override;
+    bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
-    int32_t threshold;
+    uint32_t move_tolerance = 1e9;
 };
 
 /**
@@ -329,11 +307,12 @@ class drag_action_t : public gesture_action_t
      * @return True if any finger has moved more than the threshold in an
      *  incorrect direction.
      */
-    bool exceeds_tolerance(const gesture_state_t& state) override;
+    bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
     double threshold;
     uint32_t direction;
+    uint32_t move_tolerance = 1e9;
 };
 
 /**
@@ -363,10 +342,11 @@ class pinch_action_t : public gesture_action_t
     /**
      * @return True if gesture center has moved more than tolerance.
      */
-    bool exceeds_tolerance(const gesture_state_t& state) override;
+    bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
     double threshold;
+    uint32_t move_tolerance = 1e9;
 };
 
 /**
@@ -396,13 +376,22 @@ class rotate_action_t : public gesture_action_t
     /**
      * @return True if gesture center has moved more than tolerance.
      */
-    bool exceeds_tolerance(const gesture_state_t& state) override;
+    bool exceeds_tolerance(const gesture_state_t& state);
 
   private:
     double threshold;
+    uint32_t move_tolerance = 1e9;
 };
 
 using gesture_callback_t = std::function<void()>;
+
+class timer_interface_t
+{
+  public:
+    virtual void set_timeout(uint32_t msec, std::function<void()> handler) = 0;
+    virtual void reset() = 0;
+    virtual ~timer_interface_t() = default;
+};
 
 /**
  * Represents a series of actions forming a gesture together.
@@ -419,8 +408,8 @@ class gesture_t
      * @param cancelled The callback to execute each time the gesture is
      *   cancelled.
      */
-    gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
-        gesture_callback_t completed, gesture_callback_t cancelled = [](){});
+    gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions = {},
+        gesture_callback_t completed = [](){}, gesture_callback_t cancelled = [](){});
 
     ~gesture_t();
 
@@ -435,12 +424,25 @@ class gesture_t
     void update_state(const gesture_event_t& event);
 
     /**
+     * Get the current state of the gesture.
+     */
+    action_status_t get_status() const;
+
+    /**
      * Reset the gesture state.
      *
      * @param time The time of the event causing the start of gesture
      *   recognition, this is typically the first touch event.
      */
     void reset(uint32_t time);
+
+    /**
+     * Set the timer to use for the gesture.
+     * This needs to be called before using the gesture.
+     *
+     * In wayfire, this is usually set by core.
+     */
+    void set_timer(std::unique_ptr<timer_interface_t> timer);
 
   private:
     class impl;
