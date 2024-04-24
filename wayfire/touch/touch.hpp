@@ -411,6 +411,9 @@ class gesture_t
     gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions = {},
         gesture_callback_t completed = [](){}, gesture_callback_t cancelled = [](){});
 
+    gesture_t(gesture_t&& other);
+    gesture_t& operator=(gesture_t&& other);
+
     ~gesture_t();
 
     /** @return What percentage of the actions are complete. */

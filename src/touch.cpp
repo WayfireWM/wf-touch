@@ -165,11 +165,21 @@ void wf::touch::gesture_t::set_timer(std::unique_ptr<timer_interface_t> timer)
 wf::touch::gesture_t::gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
         gesture_callback_t completed, gesture_callback_t cancelled)
 {
-    assert(!actions.empty());
     this->priv = std::make_unique<impl>();
     priv->actions = std::move(actions);
     priv->completed = completed;
     priv->cancelled = cancelled;
+}
+
+wf::touch::gesture_t::gesture_t(gesture_t&& other)
+{
+    this->priv = std::move(other.priv);
+}
+
+wf::touch::gesture_t& wf::touch::gesture_t::operator=(gesture_t&& other)
+{
+    this->priv = std::move(other.priv);
+    return *this;
 }
 
 wf::touch::gesture_t::~gesture_t() = default;
@@ -187,6 +197,8 @@ double wf::touch::gesture_t::get_progress() const
 void wf::touch::gesture_t::update_state(const gesture_event_t& event)
 {
     assert(priv->timer);
+    assert(!priv->actions.empty());
+
     priv->update_state(event);
 }
 
@@ -198,6 +210,8 @@ wf::touch::action_status_t wf::touch::gesture_t::get_status() const
 void wf::touch::gesture_t::reset(uint32_t time)
 {
     assert(priv->timer);
+    assert(!priv->actions.empty());
+
     if (priv->status == ACTION_STATUS_RUNNING)
     {
         return;
