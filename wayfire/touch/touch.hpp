@@ -77,12 +77,12 @@ struct gesture_event_t
     /** type of the event */
     gesture_event_type_t type;
     /** timestamp of the event in milliseconds */
-    uint32_t time;
+    uint32_t time{};
     /** finger id which the event is about */
-    int32_t finger;
+    int32_t finger{};
 
     /** coordinates of the finger */
-    point_t pos;
+    point_t pos{};
 };
 
 /**
