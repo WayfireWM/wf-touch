@@ -166,10 +166,12 @@ class gesture_action_t
      */
     virtual void reset(uint32_t time);
 
-    virtual ~gesture_action_t() {}
+    virtual ~gesture_action_t()
+    {}
 
   protected:
-    gesture_action_t() {}
+    gesture_action_t()
+    {}
 
     /** Time of the first event. */
     int64_t start_time;
@@ -179,7 +181,7 @@ class gesture_action_t
 };
 
 #define WFTOUCH_BUILDER_REPEAT_MEMBERS_WITH_CAST(x) \
-    x& set_move_tolerance(double tolerance) \
+    x & set_move_tolerance(double tolerance) \
     { \
         this->move_tolerance = tolerance; \
         return *this; \
@@ -383,7 +385,8 @@ class rotate_action_t : public gesture_action_t
     uint32_t move_tolerance = 1e9;
 };
 
-using gesture_callback_t = std::function<void()>;
+using gesture_callback_t = std::function<void ()>;
+using gesture_consume_t  = std::function<bool (const gesture_state_t&, const gesture_event_t&)>;
 
 class timer_interface_t
 {
@@ -409,10 +412,11 @@ class gesture_t
      *   cancelled.
      */
     gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions = {},
-        gesture_callback_t completed = [](){}, gesture_callback_t cancelled = [](){});
+        gesture_callback_t completed = [] () {}, gesture_callback_t cancelled = [] () {},
+        std::optional<gesture_consume_t> should_consume = {});
 
     gesture_t(gesture_t&& other);
-    gesture_t& operator=(gesture_t&& other);
+    gesture_t& operator =(gesture_t&& other);
 
     ~gesture_t();
 
@@ -425,6 +429,13 @@ class gesture_t
      * @param event The next event.
      */
     void update_state(const gesture_event_t& event);
+
+    /**
+     * Check whether this gesture wants to consume the current touch sequence.
+     * Consuming the touch sequence means that no clients will receive the touch events until the gesture is
+     * completed or cancelled.
+     */
+    bool should_consume(const gesture_state_t& state, const gesture_event_t& event) const;
 
     /**
      * Get the current state of the gesture.
@@ -469,11 +480,13 @@ class gesture_builder_t
 
     gesture_builder_t& on_completed(gesture_callback_t callback);
     gesture_builder_t& on_cancelled(gesture_callback_t callback);
+    gesture_builder_t& should_consume(gesture_consume_t callback);
     gesture_t build();
 
   private:
-    gesture_callback_t _on_completed = [](){};
-    gesture_callback_t _on_cancelled = [](){};
+    gesture_callback_t _on_completed = [] () {};
+    gesture_callback_t _on_cancelled = [] () {};
+    std::optional<gesture_consume_t> _should_consume;
     std::vector<std::unique_ptr<gesture_action_t>> actions;
 };
 }

@@ -10,16 +10,16 @@ point_t wf::touch::finger_t::delta() const
 finger_t wf::touch::gesture_state_t::get_center() const
 {
     finger_t center;
-    center.origin = {0, 0};
+    center.origin  = {0, 0};
     center.current = {0, 0};
 
     for (auto& f : this->fingers)
     {
-        center.origin += f.second.origin;
+        center.origin  += f.second.origin;
         center.current += f.second.current;
     }
 
-    center.origin /= this->fingers.size();
+    center.origin  /= this->fingers.size();
     center.current /= this->fingers.size();
     return center;
 }
@@ -30,13 +30,16 @@ void wf::touch::gesture_state_t::update(const gesture_event_t& event)
     {
       case EVENT_TYPE_TOUCH_DOWN:
         fingers[event.finger].origin = event.pos;
-        // fallthrough
+
+      // fallthrough
       case EVENT_TYPE_MOTION:
         fingers[event.finger].current = event.pos;
         break;
+
       case EVENT_TYPE_TOUCH_UP:
         fingers.erase(event.finger);
         break;
+
       default:
         break;
     }
@@ -69,7 +72,7 @@ void wf::touch::gesture_action_t::reset(uint32_t time)
 bool wf::touch::touch_target_t::contains(const point_t& pt) const
 {
     return x <= pt.x && pt.x < x + width &&
-        y <= pt.y && pt.y < y + height;
+           y <= pt.y && pt.y < y + height;
 }
 
 class wf::touch::gesture_t::impl
@@ -77,9 +80,10 @@ class wf::touch::gesture_t::impl
   public:
     gesture_callback_t completed;
     gesture_callback_t cancelled;
+    std::optional<gesture_consume_t> should_consume;
 
     std::vector<std::unique_ptr<gesture_action_t>> actions;
-    size_t current_action = 0;
+    size_t current_action  = 0;
     action_status_t status = ACTION_STATUS_CANCELLED;
 
     gesture_state_t finger_state;
@@ -163,12 +167,14 @@ void wf::touch::gesture_t::set_timer(std::unique_ptr<timer_interface_t> timer)
 }
 
 wf::touch::gesture_t::gesture_t(std::vector<std::unique_ptr<gesture_action_t>> actions,
-        gesture_callback_t completed, gesture_callback_t cancelled)
+    gesture_callback_t completed, gesture_callback_t cancelled,
+    std::optional<gesture_consume_t> should_consume)
 {
-    this->priv = std::make_unique<impl>();
+    this->priv    = std::make_unique<impl>();
     priv->actions = std::move(actions);
     priv->completed = completed;
     priv->cancelled = cancelled;
+    priv->should_consume = should_consume;
 }
 
 wf::touch::gesture_t::gesture_t(gesture_t&& other)
@@ -176,7 +182,7 @@ wf::touch::gesture_t::gesture_t(gesture_t&& other)
     this->priv = std::move(other.priv);
 }
 
-wf::touch::gesture_t& wf::touch::gesture_t::operator=(gesture_t&& other)
+wf::touch::gesture_t& wf::touch::gesture_t::operator =(gesture_t&& other)
 {
     this->priv = std::move(other.priv);
     return *this;
@@ -202,6 +208,12 @@ void wf::touch::gesture_t::update_state(const gesture_event_t& event)
     priv->update_state(event);
 }
 
+bool wf::touch::gesture_t::should_consume(const gesture_state_t& state,
+    const gesture_event_t& event) const
+{
+    return priv->should_consume && (*priv->should_consume)(state, event);
+}
+
 wf::touch::action_status_t wf::touch::gesture_t::get_status() const
 {
     return priv->status;
@@ -220,7 +232,8 @@ void wf::touch::gesture_t::reset(uint32_t time)
     priv->start_gesture(time);
 }
 
-wf::touch::gesture_builder_t::gesture_builder_t() {}
+wf::touch::gesture_builder_t::gesture_builder_t()
+{}
 
 wf::touch::gesture_builder_t& wf::touch::gesture_builder_t::on_completed(gesture_callback_t callback)
 {
@@ -234,7 +247,14 @@ wf::touch::gesture_builder_t& wf::touch::gesture_builder_t::on_cancelled(gesture
     return *this;
 }
 
+wf::touch::gesture_builder_t& wf::touch::gesture_builder_t::should_consume(gesture_consume_t callback)
+{
+    this->_should_consume = callback;
+    return *this;
+}
+
 wf::touch::gesture_t wf::touch::gesture_builder_t::build()
 {
-    return gesture_t(std::move(actions), _on_completed, _on_cancelled);
+    return gesture_t(std::move(actions), _on_completed, _on_cancelled,
+        _should_consume);
 }
